@@ -10,21 +10,23 @@
 \title{Initialize a new simulation}
 \usage{
 simInit(times, params, modules, objects, paths, inputs, outputs, loadOrder,
-  notOlderThan = NULL)
+  notOlderThan = NULL, studyArea)
 
 
   \S4method{simInit}{list,list,list,list,list,data.frame,data.frame,character}(times,
   params, modules, objects, paths, inputs, outputs, loadOrder,
-  notOlderThan = NULL)
+  notOlderThan = NULL, studyArea)
 
 \S4method{simInit}{ANY,ANY,ANY,character,ANY,ANY,ANY,ANY}(times, params,
-  modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL)
+  modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL,
+  studyArea)
 
 \S4method{simInit}{ANY,ANY,character,ANY,ANY,ANY,ANY,ANY}(times, params,
-  modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL)
+  modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL,
+  studyArea)
 
 \S4method{simInit}{ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY}(times, params, modules,
-  objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL)
+  objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL, studyArea)
 }
 \arguments{
 \item{times}{A named list of numeric simulation start and end times
@@ -76,6 +78,12 @@ If the module has a parameter, \code{.useCache} and it is
 \code{TRUE}, then the \code{.inputObjects} will be cached.
 Passing the current time into to \code{notOlderThan} will cause the
 Cache to be refreshed, i.e., rerun.}
+
+\item{studyArea}{An optional \code{Raster}, \code{SpatialPolygon*}, \code{Extent}
+or a filename (as character string) to load one of these. This
+will be loaded into the \code{simList} and assigned to
+\code{.studyArea}, i.e, can be accessed with e.g.,
+\code{sim@.studyArea}.}
 }
 \value{
 A \code{simList} simulation object, pre-initialized from values

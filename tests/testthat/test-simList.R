@@ -214,8 +214,11 @@ test_that("simList test all signatures", {
     # loadOrder
     loadOrder <- c("randomLandscapes", "caribouMovement", "fireSpread")
 
+    # studyArea
+    studyArea <- DEM
+
     # test all argument combinations to simInit
-    N <- 256L
+    N <- 256L#512L
     successes <- logical(N)
     argsTested <- vector("list", length = N)
     for (i in 1L:N) {
@@ -227,10 +230,11 @@ test_that("simList test all signatures", {
         {if (ceiling(i / 16) %% 2 == 0) paths = paths},         # nolint
         {if (ceiling(i / 32) %% 2 == 0) inputs = filelist},     # nolint
         {if (ceiling(i / 64) %% 2 == 0) outputs = outputs},     # nolint
-        {if (ceiling(i / 128) %% 2 == 0) loadOrder = loadOrder} # nolint
+        {if (ceiling(i / 128) %% 2 == 0) loadOrder = loadOrder}#, # nolint
+        #{if (ceiling(i / 256) %% 2 == 0) studyArea = studyArea} # nolint
       )
       argNames <- c("times", "params", "modules", "objects", "paths", "inputs",
-                    "outputs", "loadOrder")
+                    "outputs", "loadOrder")#, "studyArea")
       names(li) <- argNames
       li <- li[!sapply(li, is.null)]
       successes[i] <- tryCatch(
@@ -244,4 +248,25 @@ test_that("simList test all signatures", {
     # needs paths and params; many defaults are fine
     expect_equal(sum(successes, na.rm = TRUE), 192)
   }
+})
+
+test_that("test studyArea arg for simList", {
+  library(raster)
+  times <- list(start = 0.0, end = 10)
+  params <- list(
+    .globals = list(burnStats = "npixelsburned", stackName = "landscape")
+  )
+  modules <- list("randomLandscapes", "caribouMovement", "fireSpread")
+  paths <- list(modulePath = system.file("sampleModules", package = "SpaDES.core"))
+
+  mapPath <- system.file("maps", package = "quickPlot")
+  rasts <- lapply(dir(file.path(mapPath), full.names = TRUE, pattern = "tif")[1],
+         rasterToMemory)
+  DEM <- rasts[[1]]
+  newExt <- extent(DEM) /2
+  studyArea <- crop(DEM, newExt)
+
+  mySim <- simInit(times, params, modules, objects = list(), paths,
+                   studyArea = studyArea)
+
 })

@@ -104,6 +104,11 @@ if (getRversion() >= "3.1.0") {
 #'                     \code{TRUE}, then the \code{.inputObjects} will be cached.
 #'                     Passing the current time into to \code{notOlderThan} will cause the
 #'                     Cache to be refreshed, i.e., rerun.
+#' @param studyArea An optional \code{Raster}, \code{SpatialPolygon*}, \code{Extent}
+#'                  or a filename (as character string) to load one of these. This
+#'                  will be loaded into the \code{simList} and assigned to
+#'                  \code{.studyArea}, i.e, can be accessed with e.g.,
+#'                  \code{sim@.studyArea}.
 #'
 #' @return A \code{simList} simulation object, pre-initialized from values
 #' specified in the arguments supplied.
@@ -202,7 +207,7 @@ if (getRversion() >= "3.1.0") {
 setGeneric(
   "simInit",
   function(times, params, modules, objects, paths, inputs, outputs, loadOrder,
-           notOlderThan = NULL) {
+           notOlderThan = NULL, studyArea) {
     standardGeneric("simInit")
 })
 
@@ -227,7 +232,8 @@ setMethod(
                         inputs,
                         outputs,
                         loadOrder,
-                        notOlderThan) {
+                        notOlderThan,
+                        studyArea) {
 
     # For namespacing of each module; keep a snapshot of the search path
     .pkgEnv$searchPath <- search()
@@ -520,6 +526,8 @@ setMethod(
                                         # i.e., it includes all packages in a user search
                                         #  path, which is not necessarily the correct info
 
+    sim@.envir$.studyArea <- studyArea
+
     return(invisible(sim))
 })
 
@@ -545,7 +553,8 @@ setMethod(
                         inputs,
                         outputs,
                         loadOrder,
-                        notOlderThan) {
+                        notOlderThan,
+                        studyArea) {
     li <- lapply(names(match.call()[-1]), function(x) eval(parse(text = x)))
     names(li) <- names(match.call())[-1]
     # find the simInit call that was responsible for this, get the objects
@@ -580,7 +589,8 @@ setMethod(
                         inputs,
                         outputs,
                         loadOrder,
-                        notOlderThan) {
+                        notOlderThan,
+                        studyArea) {
     li <- lapply(names(match.call()[-1]), function(x) eval(parse(text = x)))
     names(li) <- names(match.call())[-1]
     li$modules <- as.list(modules)
@@ -612,7 +622,8 @@ setMethod(
                         inputs,
                         outputs,
                         loadOrder,
-                        notOlderThan) {
+                        notOlderThan,
+                        studyArea) {
     li <- lapply(names(match.call()[-1]), function(x) eval(parse(text = x)))
     names(li) <- names(match.call())[-1]
 
@@ -624,6 +635,7 @@ setMethod(
     if (missing(inputs)) li$inputs <- as.data.frame(NULL)
     if (missing(outputs)) li$outputs <- as.data.frame(NULL)
     if (missing(loadOrder)) li$loadOrder <- character(0)
+    if (missing(studyArea)) li$studyArea <- NULL
 
     expectedClasses <- c("list",
                          "list",
@@ -632,7 +644,8 @@ setMethod(
                          "list",
                          "data.frame",
                          "data.frame",
-                         "character")
+                         "character",
+                         "SpatialPolygons")
     listNames <- names(li)
     expectedOrder <- c("times",
                        "params",
@@ -641,7 +654,8 @@ setMethod(
                       "paths",
                       "inputs",
                       "outputs",
-                      "loadOrder")
+                      "loadOrder",
+                      "studyArea")
     ma <- match(expectedOrder, listNames)
     li <- li[ma]
 
@@ -661,3 +675,41 @@ setMethod(
 
     return(invisible(sim))
 })
+
+## Only deal with modules as character vector
+#' @rdname simInit
+#' @importFrom raster rasterToPolygons
+setMethod(
+  "simInit",
+  signature(
+    times = "ANY",
+    params = "ANY",
+    modules = "ANY",
+    objects = "ANY",
+    paths = "ANY",
+    inputs = "ANY",
+    outputs = "ANY",
+    loadOrder = "ANY",
+    studyArea = "Raster"
+  ),
+  definition = function(times,
+                        params,
+                        modules,
+                        objects,
+                        paths,
+                        inputs,
+                        outputs,
+                        loadOrder,
+                        notOlderThan,
+                        studyArea) {
+    li <- lapply(names(match.call()[-1]), function(x) eval(parse(text = x)))
+    names(li) <- names(match.call())[-1]
+    li$modules <- as.list(modules)
+    suppressMessages(li$studyArea <- Cache(rasterToPolygons, studyArea>0, dissolve = TRUE,
+                          cacheRepo = paths$cachePath, notOlderThan = notOlderThan))
+    sim <- do.call("simInit", args = li)
+    sim@.envir$.studyAreaRaster <- studyArea>0
+
+    return(invisible(sim))
+  }
+)
