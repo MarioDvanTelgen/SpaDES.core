@@ -34,6 +34,12 @@
 #'                     is the number of characters kept from each factor level.
 #'                     See details and examples.
 #'
+#' @param split An optional (named) list of arguments passed to to
+#'              \code{\link[SpaDES.tools]{splitRaster}}, e.g.,
+#'              list(nx=2, ny=2, buffer=0.1). '
+#'              This will split the \code{.studyArea} into smaller pieces
+#'              and run each one with a unique \code{spades} call.
+#'
 #' @param dirPrefix String vector. This will be concatenated as a prefix on the
 #'                  directory names. See details and examples.
 #'
@@ -184,7 +190,7 @@
 setGeneric(
   "experiment",
   function(sim, replicates = 1, params, modules, objects = list(), inputs,
-           dirPrefix = "simNum", substrLength = 3, saveExperiment = TRUE,
+           split = NULL, dirPrefix = "simNum", substrLength = 3, saveExperiment = TRUE,
            experimentFile = "experiment.RData", clearSimEnv = FALSE, notOlderThan,
            cl, ...) {
     standardGeneric("experiment")
@@ -195,6 +201,7 @@ setMethod(
   "experiment",
   signature(sim = "simList"),
   definition = function(sim, replicates, params, modules, objects, inputs,
+                        split,
                         dirPrefix, substrLength, saveExperiment,
                         experimentFile, clearSimEnv, notOlderThan, cl, ...) {
 
@@ -263,6 +270,15 @@ setMethod(
                                                simplify = FALSE))
       factorialExp$replicate <- rep(replicates, each = numExpLevels)
     }
+    if (!is.null(split)) {
+      newCall <- match.call(SpaDES.tools::splitRaster, do.call(call, append(list("splitRaster", r = NA), split)))
+      factorialExp <- do.call(rbind, replicate(prod(newCall$nx, newCall$ny), factorialExp,
+                                               simplify = FALSE))
+      factorialExp <- cbind(factorialExp, splitNum=expand.grid(
+        splitNum = seq_len(prod(newCall$nx, newCall$ny)),
+        seq_len(numExpLevels))[,1])
+
+    }
 
     FunDef <- function(ind, ...) {
       mod <- strsplit(names(factorialExp), split = "\\.") %>%
@@ -288,6 +304,13 @@ setMethod(
         paramValues <- paramValues[whNotRepl]
       }
 
+      whNotSPlit <- grep("nx|ny", colnames(paramValues), invert=TRUE)
+      if (length(whNotSPlit) < length(paramValues)) {
+        mod <- mod[whNotSPlit]
+        param <- param[whNotSPlit]
+        paramValues <- paramValues[whNotSPlit]
+      }
+
       notNA <- which(!is.na(paramValues))
 
       if (length(notNA) < length(mod)) {
@@ -297,6 +320,7 @@ setMethod(
       }
 
       sim_ <- Copy(sim)
+      browser()
       experimentDF <- data.frame(module = character(0),
                                  param = character(0),
                                  val = I(list()),
@@ -412,6 +436,17 @@ setMethod(
 
       dots <- list(...)
       if (is.null(dots$cache)) dots$cache <- FALSE
+      if(!is.null(dots$split)) {
+        if(length(sim_$.studyArea)>0) {
+          # for use with automated splitRaster
+          sim_$.studyAreaRaster <- splitRasters[[ind]]
+          sim_$.studyAreaBuffer <- raster::extend(splitRastersNoBuffer[[ind]], splitRasters[[ind]])
+          sim_$.studyAreaBuffer[] <- is.na(sim_$.studyAreaBuffer[])
+        } else {
+          message("split not used because there is no .studyArea in the simList. ",
+                  "Try passing a studyArea arg to simInit call.")
+        }
+      }
       sim3 <- spades(sim_, replicate = ind, ...)
       return(list(sim3, experimentDF))
     }
@@ -437,8 +472,27 @@ setMethod(
     dots <- list(...)
     args <- append(args, dots)
     if (missing(notOlderThan)) notOlderThan <- NULL
-    li <- list(notOlderThan = notOlderThan)
+    li <- list(notOlderThan = notOlderThan, split = split)
     args <- append(args, li)
+    if(!is.null(split)) {
+      if(require("SpaDES.tools")) {
+        splitRasCall <- match.call(SpaDES.tools::splitRaster,
+                                   do.call(call,
+                                           append(list("splitRaster", r = sim$.studyAreaRaster),
+                                                  split)))
+        splitRasters <- eval(splitRasCall)
+        if(!is.null(splitRasCall$buffer)) {
+          splitRasCall$buffer <- NULL
+          names(splitRasCall$r) <- "bufferedLayer"
+          splitRastersNoBuffer <- eval(splitRasCall)
+        }
+
+
+      } else {
+        message("Can't split raster without SpaDES.tools; please install SpaDES.tools")
+      }
+
+    }
 
     expOut <- do.call(get(parFun), args)
     sims <- lapply(expOut, function(x) x[[1]])

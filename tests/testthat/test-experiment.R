@@ -146,7 +146,26 @@ test_that("experiment does not work correctly", {
   # Compare simulations that had objects read from disk with objects passed via objects arg
   expect_equal(sims3[[1]]$landscape, sims[[1]]$landscape)
   expect_equal(sims3[[2]]$landscape, sims[[2]]$landscape)
-})
+
+  # Test split
+  mySimRLwSA <- simInit(
+    times = list(start = 0.0, end = 0.1, timeunit = "year"),
+    params = list(
+      .globals = list(stackName = "landscape"),
+      # Turn off interactive plotting
+      randomLandscapes = list(.plotInitialTime = NA)
+    ),
+    modules = list("randomLandscapes"),
+    paths = list(modulePath = system.file("sampleModules", package = "SpaDES.core"),
+                 outputPath = file.path(tmpdir, "landscapeMaps1")),
+    outputs = data.frame(objectName = "landscape", saveTime = 0, stringsAsFactors = FALSE),
+    studyArea = readRDS(landscapeFiles[[1]])[[1]]
+  )
+
+  sims <- experiment(mySimRLwSA, split = list(2,1,0.1))
+
+
+  })
 
 test_that("parallel does not work with experiment function", {
   skip_on_cran()

@@ -635,7 +635,7 @@ setMethod(
     if (missing(inputs)) li$inputs <- as.data.frame(NULL)
     if (missing(outputs)) li$outputs <- as.data.frame(NULL)
     if (missing(loadOrder)) li$loadOrder <- character(0)
-    if (missing(studyArea)) li$studyArea <- NULL
+    if (missing(studyArea)) li$studyArea <- SpatialPolygons(list())
 
     expectedClasses <- c("list",
                          "list",
@@ -705,8 +705,12 @@ setMethod(
     li <- lapply(names(match.call()[-1]), function(x) eval(parse(text = x)))
     names(li) <- names(match.call())[-1]
     li$modules <- as.list(modules)
-    suppressMessages(li$studyArea <- Cache(rasterToPolygons, studyArea>0, dissolve = TRUE,
-                          cacheRepo = paths$cachePath, notOlderThan = notOlderThan))
+    suppressMessages(li$studyArea <- Cache(rasterToPolygons, studyArea>0,
+                                          dissolve = TRUE,
+                                          compareRasterFileLength = Inf,
+                                          digestPathContent = TRUE,
+                                          cacheRepo = paths$cachePath,
+                                          notOlderThan = notOlderThan))
     sim <- do.call("simInit", args = li)
     sim@.envir$.studyAreaRaster <- studyArea>0
 

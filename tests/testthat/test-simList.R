@@ -268,5 +268,8 @@ test_that("test studyArea arg for simList", {
 
   mySim <- simInit(times, params, modules, objects = list(), paths,
                    studyArea = studyArea)
+  expect_true(is(mySim$.studyAreaRaster, "Raster"))
+  expect_true(is(mySim$.studyArea, "SpatialPolygons"))
 
-})
+
+  })

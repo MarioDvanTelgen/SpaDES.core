@@ -7,12 +7,12 @@
 \title{Run an experiment using \code{\link{spades}}}
 \usage{
 experiment(sim, replicates = 1, params, modules, objects = list(), inputs,
-  dirPrefix = "simNum", substrLength = 3, saveExperiment = TRUE,
+  split, dirPrefix = "simNum", substrLength = 3, saveExperiment = TRUE,
   experimentFile = "experiment.RData", clearSimEnv = FALSE, notOlderThan,
   cl, ...)
 
 \S4method{experiment}{simList}(sim, replicates = 1, params, modules,
-  objects = list(), inputs, dirPrefix = "simNum", substrLength = 3,
+  objects = list(), inputs, split, dirPrefix = "simNum", substrLength = 3,
   saveExperiment = TRUE, experimentFile = "experiment.RData",
   clearSimEnv = FALSE, notOlderThan, cl, ...)
 }
@@ -33,6 +33,12 @@ See details and examples.}
 
 \item{inputs}{Like for \code{\link{simInit}}, but a list of \code{inputs} data.frames.
 See details and examples.}
+
+\item{split}{An optional (named) list of arguments passed to to
+\code{\link[SpaDES.tools]{splitRaster}}, e.g.,
+list(nx=2, ny=2, buffer=0.1). '
+This will split the \code{.studyArea} into smaller pieces
+and run each one with a unique \code{spades} call.}
 
 \item{dirPrefix}{String vector. This will be concatenated as a prefix on the
 directory names. See details and examples.}

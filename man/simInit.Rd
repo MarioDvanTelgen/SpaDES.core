@@ -3,30 +3,36 @@
 \docType{methods}
 \name{simInit}
 \alias{simInit}
-\alias{simInit,list,list,list,list,list,data.frame,data.frame,character-method}
-\alias{simInit,ANY,ANY,ANY,character,ANY,ANY,ANY,ANY-method}
-\alias{simInit,ANY,ANY,character,ANY,ANY,ANY,ANY,ANY-method}
-\alias{simInit,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY-method}
+\alias{simInit,list,list,list,list,list,data.frame,data.frame,character,ANY,ANY-method}
+\alias{simInit,ANY,ANY,ANY,character,ANY,ANY,ANY,ANY,ANY,ANY-method}
+\alias{simInit,ANY,ANY,character,ANY,ANY,ANY,ANY,ANY,ANY,ANY-method}
+\alias{simInit,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY-method}
+\alias{simInit,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,Raster-method}
 \title{Initialize a new simulation}
 \usage{
 simInit(times, params, modules, objects, paths, inputs, outputs, loadOrder,
   notOlderThan = NULL, studyArea)
 
 
-  \S4method{simInit}{list,list,list,list,list,data.frame,data.frame,character}(times,
+  \S4method{simInit}{list,list,list,list,list,data.frame,data.frame,character,ANY,ANY}(times,
   params, modules, objects, paths, inputs, outputs, loadOrder,
   notOlderThan = NULL, studyArea)
 
-\S4method{simInit}{ANY,ANY,ANY,character,ANY,ANY,ANY,ANY}(times, params,
+\S4method{simInit}{ANY,ANY,ANY,character,ANY,ANY,ANY,ANY,ANY,ANY}(times, params,
   modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL,
   studyArea)
 
-\S4method{simInit}{ANY,ANY,character,ANY,ANY,ANY,ANY,ANY}(times, params,
+\S4method{simInit}{ANY,ANY,character,ANY,ANY,ANY,ANY,ANY,ANY,ANY}(times, params,
   modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL,
   studyArea)
 
-\S4method{simInit}{ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY}(times, params, modules,
-  objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL, studyArea)
+\S4method{simInit}{ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY}(times, params,
+  modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL,
+  studyArea)
+
+\S4method{simInit}{ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,ANY,Raster}(times, params,
+  modules, objects, paths, inputs, outputs, loadOrder, notOlderThan = NULL,
+  studyArea)
 }
 \arguments{
 \item{times}{A named list of numeric simulation start and end times
