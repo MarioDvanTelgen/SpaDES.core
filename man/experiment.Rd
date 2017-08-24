@@ -7,14 +7,15 @@
 \title{Run an experiment using \code{\link{spades}}}
 \usage{
 experiment(sim, replicates = 1, params, modules, objects = list(), inputs,
-  split, dirPrefix = "simNum", substrLength = 3, saveExperiment = TRUE,
-  experimentFile = "experiment.RData", clearSimEnv = FALSE, notOlderThan,
-  cl, ...)
-
-\S4method{experiment}{simList}(sim, replicates = 1, params, modules,
-  objects = list(), inputs, split, dirPrefix = "simNum", substrLength = 3,
+  split = NULL, dirPrefix = "simNum", substrLength = 3,
   saveExperiment = TRUE, experimentFile = "experiment.RData",
   clearSimEnv = FALSE, notOlderThan, cl, ...)
+
+\S4method{experiment}{simList}(sim, replicates = 1, params, modules,
+  objects = list(), inputs, split = NULL, dirPrefix = "simNum",
+  substrLength = 3, saveExperiment = TRUE,
+  experimentFile = "experiment.RData", clearSimEnv = FALSE, notOlderThan,
+  cl, ...)
 }
 \arguments{
 \item{sim}{A \code{simList} simulation object, generally produced by \code{simInit}.}

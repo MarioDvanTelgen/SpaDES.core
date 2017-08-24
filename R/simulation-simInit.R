@@ -604,6 +604,7 @@ setMethod(
 
 ## Only deal with modules as character vector
 #' @rdname simInit
+#' @importFrom sp SpatialPolygons
 setMethod(
   "simInit",
   signature(
