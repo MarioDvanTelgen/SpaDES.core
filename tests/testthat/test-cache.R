@@ -4,7 +4,6 @@ test_that("test cache", {
 
   tmpdir <- file.path(tempdir(), "testCache") %>% checkPath(create = TRUE)
   on.exit({
-    detach("package:reproducible")
     detach("package:igraph")
     unlink(tmpdir, recursive = TRUE)
   }, add = TRUE)
@@ -37,7 +36,7 @@ test_that("test cache", {
   expect_true(NROW(unique(out$artifact)) == 2) # 2 cached copies
   expect_output(print(out), "cacheId")
   expect_output(print(out), "simList")
-  expect_true(NROW(out) == 16) # will become 15 with new experiment caching stuff
+  expect_true(NROW(out[tagKey != "otherFunctions"]) == 16) #
   expect_message(sims <- Cache(experiment, mySim, replicates = 2, cache = TRUE),
                  "loading cached result from previous spades call")
 
@@ -60,7 +59,7 @@ test_that("test event-level cache", {
   tmpdir <- file.path(tempdir(), "testCache") %>% checkPath(create = TRUE)
 
   on.exit({
-    detach("package:reproducible")
+
     detach("package:igraph")
     unlink(tmpdir, recursive = TRUE)
   }, add = TRUE)
@@ -88,7 +87,7 @@ test_that("test event-level cache", {
   set.seed(1123)
   expect_true(!"Using cached copy of init event in randomLandscapes module" %in%
                 capture_output(sims <- spades(Copy(mySim), notOlderThan = Sys.time())))
-  #sims <- spades(Copy(mySim), notOlderThan = Sys.time()) ## TO DO: fix this test
+  #sims <- spades(Copy(mySim), notOlderThan = Sys.time()) ## TODO: fix this test
   landscapeMaps1 <- raster::dropLayer(sims$landscape, "Fires")
   fireMap1 <- sims$landscape$Fires
 
@@ -111,7 +110,7 @@ test_that("test module-level cache", {
 
   tmpdir <- file.path(tempdir(), "testCache") %>% checkPath(create = TRUE)
   on.exit({
-    detach("package:reproducible")
+
     detach("package:igraph")
     unlink(tmpdir, recursive = TRUE)
   }, add = TRUE)
@@ -143,7 +142,7 @@ test_that("test module-level cache", {
   set.seed(1123)
   pdf(tmpfile)
   expect_true(!("Using cached copy of init event in randomLandscapes module" %in%
-                     capture_output(sims <- spades(Copy(mySim), notOlderThan = Sys.time()))))
+                  capture_output(sims <- spades(Copy(mySim), notOlderThan = Sys.time()))))
   #sims <- spades(Copy(mySim), notOlderThan = Sys.time())
   dev.off()
 
@@ -178,35 +177,45 @@ test_that("test module-level cache", {
 test_that("test .prepareOutput", {
   library(igraph)
   library(reproducible)
+  library(raster)
 
   tmpdir <- file.path(tempdir(), "testCache") %>% checkPath(create = TRUE)
   on.exit({
-    detach("package:reproducible")
+
     detach("package:igraph")
+    detach("package:raster")
     unlink(tmpdir, recursive = TRUE)
   }, add = TRUE)
 
   try(clearCache(tmpdir), silent = TRUE)
 
-  times <- list(start = 0.0, end = 0.1, timeunit = "year")
+  times <- list(start = 0.0, end = 1, timeunit = "year")
+  mapPath <- system.file("maps", package = "quickPlot")
+  filelist <- data.frame(
+    files = dir(file.path(mapPath), full.names = TRUE, pattern = "tif")[-3],
+    stringsAsFactors = FALSE
+  )
+  layers <- lapply(filelist$files, rasterToMemory)
+  landscape <- raster::stack(layers)
+
   mySim <- simInit(
-    times = times,
+    times = list(start = 0.0, end = 2.0, timeunit = "year"),
     params = list(
       .globals = list(stackName = "landscape", burnStats = "nPixelsBurned"),
-      # Turn off interactive plotting
       fireSpread = list(.plotInitialTime = NA),
-      caribouMovement = list(.plotInitialTime = NA),
-      randomLandscapes = list(.plotInitialTime = NA, .useCache = TRUE)
+      caribouMovement = list(.plotInitialTime = NA)
     ),
-    modules = list("randomLandscapes", "fireSpread", "caribouMovement"),
+    modules = list("fireSpread", "caribouMovement"),
     paths = list(modulePath = system.file("sampleModules", package = "SpaDES.core"),
                  outputPath = tmpdir,
-                 cachePath = tmpdir)
+                 cachePath = tmpdir),
+    objects = c("landscape")
   )
+
   simCached1 <- spades(Copy(mySim), cache = TRUE, notOlderThan = Sys.time())
   simCached2 <- spades(Copy(mySim), cache = TRUE)
 
-  if(interactive()) {
+  if (interactive()) {
     cat(file = "~/tmp/out.txt", names(params(mySim)$.progress), append = FALSE)
     cat(file = "~/tmp/out.txt", "\n##############################\n", append = TRUE)
     cat(file = "~/tmp/out.txt", names(params(simCached1)$.progress), append = TRUE)
@@ -220,3 +229,95 @@ test_that("test .prepareOutput", {
   clearCache(tmpdir)
 })
 
+test_that("test .robustDigest for simLists", {
+  library(igraph)
+  library(reproducible)
+
+  tmpdir <- tempdir()
+  tmpCache <- file.path(tempdir(), "testCache") %>% checkPath(create = TRUE)
+  cwd <- getwd()
+  setwd(tmpdir)
+
+  on.exit({
+    setwd(cwd)
+
+    detach("package:igraph")
+    unlink(tmpdir, recursive = TRUE)
+  }, add = TRUE)
+
+  modName <- "test"
+  newModule(modName, path = tmpdir, open = FALSE)
+  fileName <- file.path(modName, paste0(modName,".R"))
+  newCode <- "\"hi\"" # this will be added below in 2 different spots
+
+  args = list(modules = list("test"),
+              paths = list(modulePath = tmpdir, cachePath = tmpCache),
+              params = list(test = list(.useCache = ".inputObjects")))
+
+  try(clearCache(x = tmpCache), silent = TRUE)
+
+  expect_message(do.call(simInit, args),
+                 regexp = "Using or creating cached copy|module code",
+                 all = TRUE)
+  expect_message(do.call(simInit, args),
+                 regexp = "Using or creating cached copy|Using cached copy|module code",
+                 all = TRUE)
+
+
+  # make change to .inputObjects code -- should rerun .inputObjects
+  xxx <- readLines(fileName)
+  startOfFunctionLine <- grep(xxx, pattern = "^.inputObjects")
+  editBelowLines <- grep(xxx, pattern = "EDIT BELOW")
+  editBelowLine <- editBelowLines[editBelowLines > startOfFunctionLine]
+  xxx[editBelowLine + 1] <- newCode
+  cat(xxx, file = fileName, sep = "\n")
+
+  expect_message(do.call(simInit, args),
+                 regexp = "Using or creating cached copy|module code",
+                 all = TRUE)
+  expect_message(do.call(simInit, args),
+                 regexp = "Using or creating cached copy|loading cached result|module code",
+                 all = TRUE)
+
+  # make change elsewhere (i.e., not .inputObjects code) -- should NOT rerun .inputObjects
+  xxx <- readLines(fileName)
+  startOfFunctionLine <- grep(xxx, pattern = "^.inputObjects")
+  editBelowLines <- grep(xxx, pattern = "EDIT BELOW")
+  editBelowLine <- editBelowLines[editBelowLines < startOfFunctionLine][1]
+  xxx[editBelowLine + 1] <- newCode
+  cat(xxx, file = fileName, sep = "\n")
+
+  expect_message(do.call(simInit, args),
+                 regexp = "Using or creating cached copy|loading cached result|module code",
+                 all = TRUE)
+
+
+  # In some other location, test during spades call
+  newModule(modName, path = tmpdir, open = FALSE)
+  try(clearCache(x = tmpCache), silent = TRUE)
+  args$params <- list(test = list(.useCache = c(".inputObjects", "init")))
+  bbb <- do.call(simInit, args)
+  expect_silent(spades(bbb, debug = FALSE))
+  expect_output(spades(bbb),
+                 regexp = "Using cached copy of init",
+                 all = TRUE)
+
+  # make a change in Init function
+  xxx <- readLines(fileName)
+  startOfFunctionLine <- grep(xxx, pattern = "^Init")
+  editBelowLines <- grep(xxx, pattern = "EDIT BELOW")
+  editBelowLine <- editBelowLines[editBelowLines > startOfFunctionLine][1]
+  xxx[editBelowLine + 1] <- newCode
+  cat(xxx, file = fileName, sep = "\n")
+
+  bbb <- do.call(simInit, args)
+  expect_true(any(grepl(format(bbb$test$Init), pattern = newCode)))
+
+  # should NOT use Cached copy, so no message
+  expect_silent(spades(bbb, debug = FALSE))
+  expect_output(spades(bbb),
+                regexp = "Using cached copy of init",
+                all = TRUE)
+
+
+})

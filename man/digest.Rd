@@ -6,12 +6,16 @@
 \alias{.digest,character-method}
 \title{Calculate the hashes of multiple files}
 \usage{
-.digest(file, ...)
+.digest(file, quickCheck, ...)
 
-\S4method{.digest}{character}(file, algo = "xxhash64", ...)
+\S4method{.digest}{character}(file, quickCheck, algo = "xxhash64", ...)
 }
 \arguments{
 \item{file}{Character vector of file paths.}
+
+\item{quickCheck}{Logical. If \code{TRUE}, then the check with local data will only
+use \code{file.size} instead of \code{digest::digest}.
+This is faster, but potentially much less robust.}
 
 \item{...}{Additional arguments to \code{digest::digest}.}
 }
@@ -19,7 +23,7 @@
 A character vector of hashes.
 }
 \description{
-Internal function. Wrapper for \code{\link[digest]{digest}} using md5sum.
+Internal function. Wrapper for \code{\link[digest]{digest}} using \code{xxhash64}.
 }
 \author{
 Alex Chubaty

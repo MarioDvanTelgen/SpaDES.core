@@ -1,10 +1,10 @@
 test_that("simList object initializes correctly", {
   defaults <- .coreModules() %>% unname()
-  times <- list(start = 0.0, end = 10)
+  times <- list(start = 1.0, end = 10)
   params <- list(
     .globals = list(burnStats = "npixelsburned", stackName = "landscape")
   )
-  modules <- list("randomLandscapes", "caribouMovement", "fireSpread")
+  modules <- list("randomLandscapes", "fireSpread", "caribouMovement")
   paths <- list(modulePath = system.file("sampleModules", package = "SpaDES.core"))
 
   mySim <- simInit(times, params, modules, objects = list(), paths)
@@ -14,7 +14,7 @@ test_that("simList object initializes correctly", {
   w <- getOption("width")
   options(width = 100L)
   out <- utils::capture.output(show(mySim))
-  expect_equal(length(out), 81)
+  expect_equal(length(out), 75)
   options(width = w); rm(w)
 
   ### SLOT .envir
@@ -117,14 +117,22 @@ test_that("simList object initializes correctly", {
   expect_equivalent(
     times(mySim),
     list(
-      current = 0.0,
-      start = 0.0,
+      current = 1.0,
+      start = 1.0,
       end = convertTimeunit(as.numeric(dmonth(10)), "month"),
       timeunit = "month")
   )
+
   expect_equivalent(end(mySim),  10)
-  expect_equivalent(start(mySim), 0)
-  expect_equivalent(time(mySim),  0)
+  expect_equivalent(start(mySim), 1)
+  expect_equivalent(time(mySim),  1)
+
+  # Test explicit unit passing to end and start -- was a bug introduced in converting end & start to S3
+  expect_equivalent(end(mySim, "seconds"), as.numeric(dmonth(10)))
+  expect_equivalent(start(mySim, "seconds"), as.numeric(dmonth(1)))
+
+  expect_equivalent(end(mySim, "year"), as.numeric(dmonth(1)/dyear(1)*10))
+  expect_equivalent(start(mySim, "year"), as.numeric(dmonth(1)/dyear(1)))
 
   expect_equivalent(end(mySim)   <- 20, 20.0)
   expect_equivalent(start(mySim) <- 10, 10.0)
@@ -139,8 +147,8 @@ test_that("simList object initializes correctly", {
   expect_equal("second", attr(mySim@simtimes$current, "unit"))
 
   ### required packages
-  pkgs <- c("grid", "methods", "RandomFields", "raster", "RColorBrewer", "sp",
-            "SpaDES.core", "SpaDES.tools", "stats", "tkrplot")
+  pkgs <- c("grid", "methods", "raster", "RColorBrewer", "sp",
+            "SpaDES.tools", "SpaDES.core", "stats")
   expect_equal(sort(packages(mySim)), sort(pkgs))
 
   reqdPkgs <- lapply(modules, function(m) {
@@ -246,7 +254,7 @@ test_that("simList test all signatures", {
     }
 
     # needs paths and params; many defaults are fine
-    expect_equal(sum(successes, na.rm = TRUE), 192)
+      expect_equal(sum(successes, na.rm = TRUE), 192)
   }
 })
 
@@ -273,3 +281,25 @@ test_that("test studyArea arg for simList", {
 
 
   })
+
+
+
+test_that("simList object initializes correctly", {
+  ## test with outputs
+  ras = raster::raster(nrows = 10, ncols = 10, xmn = -5, xmx = 5, ymn = -5, ymx = 5)
+  abundRasters <- list(SpaDES.tools::gaussMap(ras, scale = 100, var = 0.01))
+
+  tmpdir <- tempdir()
+  newModule(name = "test", path = file.path(tmpdir, "modules"), open = FALSE)
+  obj = list(abundRasters = abundRasters)#,
+             #tempRasters = tempRasters)
+  paths = list(modulePath = file.path(tmpdir, "modules"))
+  #If start is set to 1.0, there is a warning message and spades doesn???t seem to run.
+  aa <- (capture_warnings(mySim <- simInit(times = list(start = 1.0, end = 2.0),
+                   modules = list("test"), paths = paths,
+                   objects = obj)))
+  expect_length(aa, 0)
+
+
+})
+

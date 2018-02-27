@@ -5,46 +5,27 @@
 \alias{spades}
 \alias{spades,simList,ANY,ANY,missing-method}
 \alias{spades,ANY,ANY,ANY,logical-method}
-\title{setMethod(
-  "scheduleEvent",
-  signature(
-    sim = "simList",
-    eventTime = "NULL",
-    moduleName = "character",
-    eventType = "character",
-    eventPriority = "numeric"
-  ),
-  definition = function(sim,
-                        eventTime,
-                        moduleName,
-                        eventType,
-                        eventPriority) {
-    warning(
-      paste(
-        "Invalid or missing eventTime. This is usually",
-        "caused by an attempt to scheduleEvent at time NULL",
-        "or by using an undefined parameter."
-      )
-    )
-    return(invisible(sim))
-  })}
+\title{Run a spatial discrete event simulation}
 \usage{
-spades(sim, debug = FALSE, progress = NA, cache, .plotInitialTime = NULL,
-  .saveInitialTime = NULL, notOlderThan = NULL, ...)
+spades(sim, debug = getOption("spades.debug"), progress = NA, cache,
+  .plotInitialTime = NULL, .saveInitialTime = NULL, notOlderThan = NULL,
+  ...)
 
-\S4method{spades}{simList,ANY,ANY,missing}(sim, debug = FALSE,
+\S4method{spades}{simList,ANY,ANY,missing}(sim,
+  debug = getOption("spades.debug"), progress = NA, cache,
+  .plotInitialTime = NULL, .saveInitialTime = NULL, notOlderThan = NULL,
+  ...)
+
+\S4method{spades}{ANY,ANY,ANY,logical}(sim, debug = getOption("spades.debug"),
   progress = NA, cache, .plotInitialTime = NULL, .saveInitialTime = NULL,
-  notOlderThan = NULL, ...)
-
-\S4method{spades}{ANY,ANY,ANY,logical}(sim, debug = FALSE, progress = NA,
-  cache, .plotInitialTime = NULL, .saveInitialTime = NULL,
   notOlderThan = NULL, ...)
 }
 \arguments{
 \item{sim}{A \code{simList} simulation object, generally produced by \code{simInit}.}
 
 \item{debug}{Optional logical flag or character vector indicating what to print to
-console at each event. See details. Default is \code{FALSE}.}
+console at each event. See details.
+Default is to use the value in \code{getOption("spades.debug")}.}
 
 \item{progress}{Logical (\code{TRUE} or \code{FALSE} show a graphical progress bar),
 character (\code{"graphical"}, \code{"text"}) or numeric indicating
@@ -77,37 +58,11 @@ anything passed in \code{...} is unique, i.e., not cached previously.}
 Invisibly returns the modified \code{simList} object.
 }
 \description{
-#' @rdname scheduleEvent
-setMethod(
-  "scheduleEvent",
-  signature(
-    sim = "simList",
-    eventTime = "numeric",
-    moduleName = "character",
-    eventType = "character",
-    eventPriority = "missing"
-  ),
-  definition = function(sim,
-                        eventTime,
-                        moduleName,
-                        eventType,
-                        eventPriority) {
-    scheduleEvent(
-      sim = sim,
-      eventTime = eventTime,
-      moduleName = moduleName,
-      eventType = eventType,
-      eventPriority = .normal()
-    )
-  })
-Run a spatial discrete event simulation
-}
-\details{
 Here, we implement a simulation in a more modular fashion so it's easier to add
 submodules to the simulation. We use S4 classes and methods, and use `data.table`
 instead of `data.frame` to implement the event queue (because it is much faster).
-
-
+}
+\details{
 The is the workhorse function in the SpaDES package. It runs simulations by
 implementing the rules outlined in the \code{simList}.
 
@@ -129,18 +84,6 @@ a previous run, even if there is stochasticity internally.
 Caching is only based on the input simList. See also \code{experiment} for
 the same mechanism, but it can be used with replication.
 See also the vignette on caching for examples.
-
-If \code{debug} is specified, it can be a logical or character vector.
-In all cases, something will be printed to the console immediately before each
-event is being executed.
-If \code{TRUE}, then the event immediately following will be printed as it
-runs (equivalent to \code{current(sim)}).
-If a character string, then it can be one of the many \code{simList} accessors,
-such as \code{events}, \code{params}, \code{"simList"} (print the entire simList),
-or any R expression.
-If an R expression it will be evaluated with access to the \code{sim} object.
-If this is more than one character string, then all will be printed to the
-screen in their sequence.
 }
 \note{
 The debug option is primarily intended to facilitate building simulation
@@ -149,6 +92,31 @@ Will print additional outputs informing the user of updates to the values of
 various \code{simList} slot components.
 See \url{https://github.com/PredictiveEcology/SpaDES/wiki/Debugging} for details.
 }
+\section{\code{debug}}{
+
+
+If \code{debug} is specified, it can be a logical or character vector.
+If not specified, the package option \code{spades.debug} is used. The following
+options for debug are available:
+
+\tabular{ll}{
+  \code{TRUE} \tab the event immediately following will be printed as it
+runs (equivalent to \code{current(sim)}).\cr
+  function name (as character string) \tab If a function, then it will be run on the
+                                           simList, e.g., "time" will run
+                                           \code{time(sim)} at each event.\cr
+  moduleName (as character string) \tab All calls to that module will be entered
+                                        interactively\cr
+  eventName (as character string) \tab All calls that have that event name (in any module)
+                                       will be entered interactively\cr
+  \code{c(<moduleName>, <eventName>)}  \tab Only the event in that specified module
+                                            will be entered into. \cr
+  Any other R expression  \tab Will be evaluated with access to the simList as 'sim'.
+                               If this is more than one character string, then all will
+                               be printed to the screen in their sequence. \cr
+}
+}
+
 \examples{
 \dontrun{
 mySim <- simInit(
@@ -161,7 +129,10 @@ mySim <- simInit(
 )
 spades(mySim)
 
-# Different debug options
+# set default debug printing for the current session
+# setOption(spades.debug = TRUE)
+
+# Different debug options (overrides the package option 'spades.debug')
 spades(mySim, debug = TRUE) # Fastest
 spades(mySim, debug = "simList")
 spades(mySim, debug = "print(table(sim$landscape$Fires[]))")
@@ -193,9 +164,11 @@ Matloff, N. (2011). The Art of R Programming (ch. 7.8.3).
             Retrieved from \url{https://www.nostarch.com/artofr.htm}
 }
 \seealso{
-\code{\link{simInit}}, \code{\link{SpaDES.core-package}}, \code{\link[reproducible]{Cache}}
-
-\code{\link{experiment}} for using replication with \code{spades}.
+\code{\link{SpaDES.core-package}},
+\code{\link{experiment}} for using replication with \code{spades},
+\code{\link{simInit}}, and the caching vignette (very important for reproducibility):
+\url{https://CRAN.R-project.org/package=SpaDES/vignettes/iii-cache.html} which
+uses \code{\link[reproducible]{Cache}}.
 }
 \author{
 Alex Chubaty and Eliot McIntire

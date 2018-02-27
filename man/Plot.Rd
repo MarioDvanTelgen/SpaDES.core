@@ -9,11 +9,15 @@
   gpText = gpar(), gpAxis = gpar(), axes = FALSE, speedup = 1,
   size = 5, cols = NULL, col = NULL, zoomExtent = NULL,
   visualSqueeze = NULL, legend = TRUE, legendRange = NULL,
-  legendText = NULL, pch = 19, title = TRUE, na.color = "#FFFFFF00",
+  legendText = NULL, pch = 19, title = NULL, na.color = "#FFFFFF00",
   zero.color = NULL, length = NULL, arr = NULL, plotFn = "plot")
 }
 \arguments{
-\item{...}{A combination of \code{spatialObjects} or some non-spatial objects.
+\item{...}{A combination of \code{spatialObjects} or non-spatial objects.
+For many object classes, there are specific \code{Plot} methods. Where
+there are no specific ones, the base plotting will be used internally.
+This means that for objects with no specific \code{Plot} methods,
+many arguments, such as \code{addTo}, will not work.
 See details.}
 
 \item{new}{Logical. If \code{TRUE}, then the previous named plot area is wiped
@@ -86,7 +90,9 @@ this is mostly useful for discrete-valued rasters.}
 indicates whether to print the object name as the title
 above the plot. If a character string, it will print this
 above the plot. NOTE: the object name is used with \code{addTo},
-not the title.}
+not the title. Default NULL, which means print the object
+name as title, if no other already exists on the plot, in
+which case, keep the previous title.}
 
 \item{na.color}{Character string indicating the color for \code{NA} values.
 Default transparent.}

@@ -80,16 +80,12 @@ load order will be determined automatically.}
 
 \item{notOlderThan}{A time, as in from \code{Sys.time()}. This is passed into
 the \code{Cache} function that wraps \code{.inputObjects}.
-If the module has a parameter, \code{.useCache} and it is
-\code{TRUE}, then the \code{.inputObjects} will be cached.
-Passing the current time into to \code{notOlderThan} will cause the
-Cache to be refreshed, i.e., rerun.}
-
-\item{studyArea}{An optional \code{Raster}, \code{SpatialPolygon*}, \code{Extent}
-or a filename (as character string) to load one of these. This
-will be loaded into the \code{simList} and assigned to
-\code{.studyArea}, i.e, can be accessed with e.g.,
-\code{sim@.studyArea}.}
+If the module uses the \code{.useCache} parameter and it is
+set to \code{TRUE} or \code{".inputObjects"},
+then the \code{.inputObjects} will be cached.
+Setting \code{notOlderThan = Sys.time()} will cause the
+cached versions of \code{.inputObjects} to be refreshed,
+i.e., rerun.}
 }
 \value{
 A \code{simList} simulation object, pre-initialized from values
@@ -99,23 +95,48 @@ specified in the arguments supplied.
 Create a new simulation object, the "sim" object. This object is implemented
 using an \code{environment} where all objects and functions are placed.
 Since environments in \code{R} are
-pass by reference, "putting" objects in the sim object does no actual copy. This
-is also the location of all parameters, and other important simulation information, such
+pass by reference, "putting" objects in the sim object does no actual copy. The
+\code{simList} also stores all parameters,
+and other important simulation information, such
 as times, paths, modules, and module load order. See more details below.
 }
 \details{
-Calling this simInit function does several things including the following:
-- sources all module files, placing all function definitions in the sim object
-- optionally copies objects from the global environment to the sim object
-- optionally loads objects from disk
-- schedules all "init" events from all modules
-- assesses module dependencies via the inputs and outputs identified in their metadata
-- determines time units of modules and how they fit together
+\subsection{Calling this \code{simInit} function does the following:}{
+  \tabular{lll}{
+  \bold{What} \tab \bold{Details} \tab \bold{Argument(s) to use} \cr
+  fills \code{simList} slots \tab places the arguments \code{times},
+    \code{params}, \code{modules}, \code{paths} into equivalently named
+    \code{simList} slots \tab \code{times},
+    \code{params}, \code{modules}, \code{paths}\cr
+  sources all module files \tab places all function definitions in the
+    \code{simList}, specifically, into a sub-environment of the main
+    \code{simList} environment: e.g., \code{sim$<moduleName>$function1}
+    (see section on \bold{Scoping}) \tab \code{modules} \cr
+  copies objects \tab from the global environment to the
+    \code{simList} environment \tab \code{objects} \cr
+  loads objects \tab from disk into the \code{simList} \tab \code{inputs} \cr
+  schedule object loading/copying \tab Objects can be loaded into the
+    \code{simList} at any time during a simulation  \tab \code{inputs} \cr
+  schedule object saving \tab Objects can be saved to disk at any arbitrary
+    time during the simulation. If specified here, this will be in addition
+    to any saving due code inside a module (i.e., a module may manually
+    run \code{write.table(...)} \tab \code{outputs} \cr
+  schedules "init" events \tab from all modules (see \code{\link{events}})
+       \tab automatic  \cr
+  assesses module dependencies \tab via the inputs and outputs identified in their
+    metadata. This gives the order of the \code{.inputObjects} and \code{init}
+    events. This can be overridden by \code{loadOrder}. \tab automatic \cr
+  determines time unit \tab takes time units of modules
+      and how they fit together \tab \code{times} or automatic \cr
+  runs \code{.inputObjects} functions \tab from every module
+    \emph{in the module order as determined above} \tab automatic
+  }
+}
 
 \code{params} can only contain updates to any parameters that are defined in
 the metadata of modules. Take the example of a module named, \code{Fire}, which
-has a parameter named \code{.plotInitialTime}. In the metadata of that moduel,
-it says TRUE. Here we can override that default with:
+has a parameter named \code{.plotInitialTime}. In the metadata of that module,
+it says \code{TRUE}. Here we can override that default with:
 \code{list(Fire=list(.plotInitialTime=NA))}, effectively turning off plotting. Since
 this is a list of lists, one can override the module defaults for multiple parameters
 from multiple modules all at once, with say:
@@ -124,8 +145,7 @@ from multiple modules all at once, with say:
 
 We implement a discrete event simulation in a more modular fashion so it is
 easier to add modules to the simulation. We use S4 classes and methods,
-and use \code{data.table} instead of \code{data.frame} to implement the event
-queue (because it is much faster).
+and fast lists to manage the event queue.
 
 \code{paths} specifies the location of the module source files,
 the data input files, and the saving output files. If no paths are specified
@@ -142,11 +162,42 @@ the defaults are as follows:
 }
 }
 \note{
-The user can opt to run a simpler simInit call without inputs, outputs, and times.
+The user can opt to run a simpler \code{simInit} call without inputs, outputs, and times.
 These can be added later with the accessor methods (See example). These are not required for initializing the
 simulation via simInit. \code{modules}, \code{paths}, \code{params}, and \code{objects}
-are all needed for initialization.
+are all needed for successful initialization.
 }
+\section{Parsing and Checking Code}{
+
+
+The \code{simInit} function will attempt to find usage of sim$xxx
+or sim[['xxx']] on either side of the assignement "<-" operator.
+It will compare these to the module metadata, specifically
+\code{inputObjects} for cases where objects or "gotten" from the
+simList and \code{outputObjects} for cases where objects are
+assigned to the simList.
+
+It will also attempt to find potential, common function name conflicts
+with things like scale and stack (both in base and raster), and
+Plot (in quickPlot and some modules).
+
+\emph{This code checking is young and may get false positives and
+false negatives -- i.e., miss things}. It also takes computational
+time, which may be undesireable in operational code.
+To turn off checking (i.e.,
+if there are too many false positives and negatives), set
+the option \code{spades.moduleCodeChecks} to \code{FALSE},
+e.g., \code{options(spades.moduleCodeChecks = FALSE)}
+}
+
+\section{Caching}{
+
+
+Using caching with \code{SpaDES} is vital when building re-useable and reproducible
+content. Please see the vignette dedicated to this topic. See
+\url{https://CRAN.R-project.org/package=SpaDES/vignettes/iii-cache.html}
+}
+
 \examples{
 \dontrun{
 mySim <- simInit(
@@ -157,7 +208,7 @@ mySim <- simInit(
  modules = list("randomLandscapes", "fireSpread", "caribouMovement"),
  paths = list(modulePath = system.file("sampleModules", package = "SpaDES.core"))
 )
-spades(mySim, .plotInitialTime = NA)
+spades(mySim) # shows plotting
 
 # Change more parameters, removing plotting
 mySim <- simInit(
@@ -213,7 +264,7 @@ if (require(rgdal)) {
      loadTime = 1,
      stringsAsFactors = FALSE)
  outputs(mySim2) <- data.frame(
-     expand.grid(objectName = c("caribou","landscape"),
+     expand.grid(objectName = c("caribou", "landscape"),
      saveTime = 1:2,
      stringsAsFactors = FALSE))
  all.equal(mySim, mySim2) # TRUE
@@ -243,14 +294,13 @@ if (require(rgdal)) {
  #   declared during module loading, so month became the default
  times(mySim2) <- list(current = 0, start = 0.0, end = 2.0, timeunit = "year")
  all.equal(mySim, mySim2) # fails because time units are all different, so
-             # several parameters that have time units in "months" because they were
-             #  loaded that way
+                          # several parameters that have time units in
+                          # "months" because they were loaded that way
  params(mySim)$fireSpread$.plotInitialTime
  params(mySim2)$fireSpread$.plotInitialTime
  events(mySim) # load event is at time 1 year
  events(mySim2) # load event is at time 1 month, reported in years because of
                 #   update to times above
-
 }
 }
 

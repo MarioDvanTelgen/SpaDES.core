@@ -1,8 +1,30 @@
+#' Defaults values used in defineModule
+#'
+#' Where individual elements are missing in \code{defineModule},
+#' these defaults will be used.
+#' @export
+#'
+moduleDefaults <- list(
+  timeunit = "year",
+  name = NA_character_,
+  description = NA_character_,
+  keywords = NA_character_,
+  authors = person("unknown"),
+  childModules = character(0),
+  version = quote(as.numeric_version(x$version)),
+  extent = quote(raster::extent(rep(NA_real_, 4))),
+  timeframe = quote(as.POSIXlt(c(NA, NA))),
+  citation = list(),
+  documentation = list(),
+  reqdPkgs = list()
+)
+
 ################################################################################
 #' Define a new module.
 #'
 #' Specify a new module's metadata as well as object and package dependencies.
-#' Packages are loaded during this call.
+#' Packages are loaded during this call. Any or all of these can be missing, with missing
+#' values set to defaults
 #'
 #' @section Required metadata elements:
 #'
@@ -31,7 +53,7 @@
 #'                        if a character or numeric are supplied).
 #'                        The module developer should update manually this with each change
 #'                        that is made to the module. See \url{http://semver.org/}
-#'                        for a widely accepted standard for version numering.\cr
+#'                        for a widely accepted standard for version numbering.\cr
 #'    \code{spatialExtent} \tab The spatial extent of the module supplied via
 #'                              \code{raster::extent}. This is currently unimplemented.
 #'                              Once implemented, this should define what spatial region this
@@ -55,7 +77,13 @@
 #'                              This is currently not parsed by SpaDES;
 #'                              it is for human readers only.\cr\cr
 #'    \code{reqdPkgs} \tab List of R package names required by the module. These
-#'                         packages will be loaded when \code{simInit} is called. \cr
+#'                         packages will be loaded when \code{simInit} is called.
+#'                         \code{\link[reproducible]{Require}} will be used internally
+#'                         to load if available, and install if not available.
+#'                         Because \code{\link[reproducible]{Require}} can also download from
+#'                         GitHub.com, these packages can specify package names stored
+#'                         on GitHub, e.g., \code{"PredictiveEcology/SpaDES.core@development"}.
+#'                         \cr
 #'    \code{parameters} \tab A data.frame specifying the parameters used in the module.
 #'                           Usually produced by \code{rbind}-ing the outputs of multiple
 #'                           \code{\link{defineParameter}} calls. These parameters indicate
@@ -104,11 +132,12 @@
 #' @return Updated \code{simList} object.
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @export
 #' @importFrom raster extent
+#' @importFrom utils person as.person
 #' @include simList-class.R
 #' @rdname defineModule
+#' @seealso moduleDefaults
 #'
 #' @examples
 #' \dontrun{
@@ -116,7 +145,7 @@
 #'   newModule("test", path = tempdir())
 #'
 #'   ## view the resulting module file
-#'   #file.edit(file.path(tempdir(), "test", "test.R"))
+#'   if (interactive()) file.edit(file.path(tempdir(), "test", "test.R"))
 #'
 #'   # The default defineModule created by newModule is currently (SpaDES version 1.3.1.9044):
 #'   defineModule(sim, list(
@@ -135,7 +164,7 @@
 #'     reqdPkgs = list(),
 #'     parameters = rbind(
 #'       #defineParameter("paramName", "paramClass", value, min, max,
-#'       "parameter description")),
+#'       # "parameter description")),
 #'       defineParameter(".plotInitialTime", "numeric", NA, NA, NA,
 #'       "This describes the simulation time at which the first plot event should occur"),
 #'       defineParameter(".plotInterval", "numeric", NA, NA, NA,
@@ -175,35 +204,33 @@ setMethod(
       warning(paste0(
         "The \'", x$name, "\' module is missing the metadata for:\n",
         paste(" - ", metadataMissing, collapse = "\n"), "\n",
-        "Please see ?defineModule and ?.moduleDeps for more info.\n",
-        "All metadata elements must be present and valid."
+        "Using default values, which may not be desireable.\n",
+        "See moduleDefaults"
       ))
-    }
-
-    # provide default values for missing metadata elements
-    if (identical(x$reqdPkgs, list())) {
-      x$reqdPkgs <- list()
-    } else if (is.null(na.omit(x$reqdPkgs))) {
-      x$reqdPkgs <- list()
-    } else if (any(!nzchar(na.omit(x$reqdPkgs)))) {
-      x$reqdPkgs <- list()
-    } else {
-      loadPackages(x$reqdPkgs)
     }
 
     ## enforce/coerce types for the user-supplied param list
     lapply(c("name", "description", "keywords"), function(z) {
-      x[[z]] <<- if ( is.null(x[[z]]) || (length(x[[z]]) == 0) ) {
-        NA_character_
+      x[[z]] <<- if (is.null(x[[z]]) || (length(x[[z]]) == 0)) {
+        moduleDefaults[[z]]
       } else {
         as.character(x[[z]])
       }
     })
 
-    x$childModules <- x$childModules %>% as.character() %>% na.omit() %>% as.character()
+    x$childModules <- if (is.null(x$childModules)) {
+      moduleDefaults$childModules
+    } else {
+      if (isTRUE(is.na(x$childModules))) {
+        moduleDefaults$childModules
+      } else {
+        x$childModules %>% as.character() %>% na.omit() %>% as.character() # nolint
+      }
+    }
 
-    x$authors <- if ( is.null(x$authors) || is.na(x$authors) ) {
-      person("unknown")
+
+    x$authors <- if (is.null(x$authors) || is.na(x$authors)) {
+      moduleDefaults$authors
     } else {
       as.person(x$authors)
     }
@@ -211,46 +238,46 @@ setMethod(
     ## maintain backwards compatibility with SpaDES versions prior to 1.3.1.9044
     ## where `version` was a single `numeric_version` value instead of named list
     x$version <- if (is.null(names(x$version))) {
-      as.numeric_version(x$version) ## SpaDES < 1.3.1.9044
+      eval(moduleDefaults$version) ## SpaDES < 1.3.1.9044
     } else {
       as.numeric_version(x$version[[x$name]]) ## SpaDES >= 1.3.1.9044
     }
 
     x$spatialExtent <- if (!is(x$spatialExtent, "Extent")) {
       if (is.null(x$spatialExtent)) {
-        extent(rep(NA_real_, 4))
+        eval(moduleDefaults$extent)
       } else {
         if (is.na(x$spatialExtent)) {
-          extent(rep(NA_real_, 4))
+          moduleDefaults$extent
         } else {
           extent(x$spatialExtent)
         }
       }
     }
 
-    x$timeframe <- if ( is.null(x$timeframe) || is.na(x$timeframe) ) {
-      as.POSIXlt(c(NA, NA))
+    x$timeframe <- if (is.null(x$timeframe) || is.na(x$timeframe)) {
+      eval(moduleDefaults$timeframe)
     } else if (!is.numeric.POSIXt(x$timeframe)) {
       as.POSIXlt(x$timeframe)
-    } %>% `[`(1:2)
+    } %>% `[`(1:2) # nolint
 
-    if ( is.null(x$timeunit) || is.na(x$timeunit) ) {
-      x$timeunit <- NA_character_
+    if (is.null(x$timeunit) || is.na(x$timeunit)) {
+      x$timeunit <- moduleDefaults$timeunit
     }
 
     lapply(c("citation", "documentation", "reqdPkgs"), function(z) {
       x[[z]] <<- if (is.null(x[[z]])) {
-        list()
+        moduleDefaults[[z]]
       } else {
         as.list(x[[z]])
       }
     })
-    if ( is.null(x$parameters) ) {
+    if (is.null(x$parameters)) {
       x$parameters <- defineParameter()
     } else {
-      if ( is(x$parameters, "data.frame") ) {
-        if ( !all(colnames(x$parameters) %in% colnames(defineParameter())) ||
-             !all(colnames(defineParameter()) %in% colnames(x$parameters)) ) {
+      if (is(x$parameters, "data.frame")) {
+        if (!all(colnames(x$parameters) %in% colnames(defineParameter())) ||
+            !all(colnames(defineParameter()) %in% colnames(x$parameters))) {
           stop("invalid data.frame `parameters` in module `", x$name, "`")
         }
       } else {
@@ -262,8 +289,8 @@ setMethod(
       x$inputObjects <- .inputObjects()
     } else {
       if (is(x$inputObjects, "data.frame")) {
-        if ( !all(colnames(x$inputObjects) %in% colnames(.inputObjects())) ||
-             !all(colnames(.inputObjects()) %in% colnames(x$inputObjects)) ) {
+        if (!all(colnames(x$inputObjects) %in% colnames(.inputObjects())) ||
+            !all(colnames(.inputObjects()) %in% colnames(x$inputObjects))) {
           stop("invalid data.frame `inputObjects` in module `", x$name, "`:\n",
                "provided: ", paste(colnames(x$inputObjects), collapse = ", "),
                "expected: ", paste(colnames(.inputObjects()), collapse = ", "))
@@ -286,8 +313,8 @@ setMethod(
       x$outputObjects <- .outputObjects()
     } else {
       if (is(x$outputObjects, "data.frame")) {
-        if ( !all(colnames(x$outputObjects) %in% colnames(.outputObjects())) ||
-             !all(colnames(.outputObjects()) %in% colnames(x$outputObjects)) ) {
+        if (!all(colnames(x$outputObjects) %in% colnames(.outputObjects())) ||
+            !all(colnames(.outputObjects()) %in% colnames(x$outputObjects))) {
           stop("invalid data.frame `outputObjects` in module `", x$name, "`:",
                "provided: ", paste(colnames(x$outputObjects), collapse = ", "), "\n",
                "expected: ", paste(colnames(.outputObjects()), collapse = ", "))
@@ -330,6 +357,10 @@ setMethod(
 #'
 #' Used to specify a parameter's name, value, and set a default.
 #'
+#' @note Be sure to use the correct NA type: logical (\code{NA}), integer (\code{NA_integer_}),
+#'       real (\code{NA_real_}), complex (\code{NA_complex_}), or character (\code{NA_character_}).
+#'       See \code{\link{NA}}.
+#'
 #' @param name      Character string giving the parameter name.
 #' @param class     Character string giving the parameter class.
 #' @param default   The default value to use when none is specified by the user.
@@ -343,7 +374,6 @@ setMethod(
 #' @return data.frame
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @export
 #' @rdname defineParameter
 #'
@@ -362,13 +392,20 @@ setMethod("defineParameter",
           signature(name = "character", class = "character", default = "ANY",
                     min = "ANY", max = "ANY", desc = "character"),
           definition = function(name, class, default, min, max, desc) {
-
-            # coerce `default`, `min`, and `max` to same specified type
-            # These next lines commented out because it doesn't allow for character e.g.,
-            #   start(sim)
-            #default <- as(default, class)
-            #min <- as(min, class)
-            #max <- as(max, class)
+            # for non-NA values warn if `default`, `min`, and `max` aren't the specified type
+            # we can't just coerece these because it wouldn't allow for character,
+            #  e.g., start(sim)
+            anyNAs <- c(is.na(default), is.na(min), is.na(max))
+            if (!all(anyNAs)) {
+              # if some or all are NA -- need to check
+              if (!all(is(c(default, min, max)[!anyNAs], class))) {
+                #if (!all(is(default, class), is(min, class), is(max, class))) {
+                # any messages here are captured if this is run from .parseModule
+                #   It will append module name
+                message(crayon::magenta("defineParameter: '", name, "' is not of specified type '",
+                                        class, "'.", sep = ""))
+              }
+            }
 
             # previously used `substitute()` instead of `I()`,
             # but it did not allow for a vector to be passed with `c()`
@@ -385,7 +422,7 @@ setMethod("defineParameter",
                     default = "ANY", min = "missing", max = "missing",
                     desc = "character"),
           definition = function(name, class, default, desc) {
-            NAtypes <- c("character", "complex", "integer", "logical", "numeric")
+            NAtypes <- c("character", "complex", "integer", "logical", "numeric") # nolint
             if (class %in% NAtypes) {
               # coerce `min` and `max` to same type as `default`
               min <- as(NA, class)
@@ -437,7 +474,6 @@ setMethod(
 #' module's metadata.
 #'
 #' @author Yong Luo
-#' @docType methods
 #' @export
 #' @rdname expectsInput
 #'
@@ -513,7 +549,6 @@ setMethod(
 #' a module's metadata.
 #'
 #' @author Yong Luo
-#' @docType methods
 #' @export
 #' @rdname createsOutput
 #'
@@ -580,7 +615,7 @@ setMethod(
   if (any(needRenameArgs)) {
     colnames(inputDF)[needRenameArgs] <- .fileTableInCols[pmatch("arg", .fileTableInCols)]
   }
-  columns <- pmatch(.fileTableInCols, names(inputDF))
+  columns <- pmatch(substr(.fileTableInCols, 1, c(3, 5, 1, 3, 5, 5, 3, 5)), names(inputDF))
   setnames(inputDF, old = colnames(inputDF)[na.omit(columns)],
            new = .fileTableInCols[!is.na(columns)])
   if (any(is.na(columns))) {
@@ -592,7 +627,7 @@ setMethod(
   }
 
   if (any(is.na(inputDF[, "objectName"]))) {
-    inputDF[is.na(inputDF$objectName), "objectName"] <- fileName(inputDF[is.na(inputDF$objectName), "file"])
+    inputDF[is.na(inputDF$objectName), "objectName"] <- fileName(inputDF[is.na(inputDF$objectName), "file"]) # nolint
   }
 
   # correct those for which a specific function is supplied in filelistDT$fun
@@ -611,7 +646,7 @@ setMethod(
     if (any(is.na(inputDF2[, "fun"]))) {
       .fileExts <- .fileExtensions()
       fl <- inputDF2$file
-      exts <- na.omit(match(fileExt(fl), .fileExts[, "exts"]) )
+      exts <- na.omit(match(fileExt(fl), .fileExts[, "exts"]))
       inputDF2$fun[is.na(inputDF2$fun)] <- .fileExts[exts, "fun"]
     }
 
@@ -640,7 +675,7 @@ setMethod(
     colnames(outputDF)[needRenameArgs] <-
       .fileTableOutCols[pmatch("arg", .fileTableOutCols)]
   }
-  columns <- pmatch(.fileTableOutCols, names(outputDF))
+  columns <- pmatch(substr(.fileTableOutCols, 1, c(3, 5, 1, 3, 5, 5, 3)), names(outputDF))
   setnames(outputDF, old = colnames(outputDF)[na.omit(columns)],
            new = .fileTableOutCols[!is.na(columns)])
 
@@ -665,11 +700,11 @@ setMethod(
     .fileExts <- .saveFileExtensions()
     fl <- outputDF$file
     exts <- fileExt(fl)
-    if (any(is.na(fl)) | any(!nzchar(exts, keepNA=TRUE))) {
-      outputDF$fun[is.na(fl) | (!nzchar(exts, keepNA=TRUE))] <- .fileExts$fun[1]
+    if (any(is.na(fl)) | any(!nzchar(exts, keepNA = TRUE))) {
+      outputDF$fun[is.na(fl) | (!nzchar(exts, keepNA = TRUE))] <- .fileExts$fun[1]
     }
     if (any(is.na(outputDF[, "fun"]))) {
-      exts <- na.omit(match(exts, .fileExts[, "exts"]) )
+      exts <- na.omit(match(exts, .fileExts[, "exts"]))
       outputDF$fun[is.na(outputDF$fun)] <- .fileExts[exts, "fun"]
     }
   }
@@ -678,8 +713,8 @@ setMethod(
     .fileExts <- .saveFileExtensions()
     fl <- outputDF$file
     exts <- fileExt(fl)
-    if (any(is.na(fl)) | any(!nzchar(exts, keepNA=TRUE))) {
-      outputDF$package[is.na(fl) | (!nzchar(exts, keepNA=TRUE))] <- .fileExts$package[1]
+    if (any(is.na(fl)) | any(!nzchar(exts, keepNA = TRUE))) {
+      outputDF$package[is.na(fl) | (!nzchar(exts, keepNA = TRUE))] <- .fileExts$package[1]
     }
     if (any(is.na(outputDF[, "package"]))) {
       exts <- na.omit(match(fileExt(fl), .fileExts[, "exts"]) )
@@ -688,4 +723,3 @@ setMethod(
   }
   return(outputDF)
 }
-

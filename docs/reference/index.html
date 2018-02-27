@@ -11,8 +11,8 @@
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -34,6 +34,18 @@
 <![endif]-->
 
 
+<!-- Google analytics -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-58633549-6', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
   </head>
 
   <body>
@@ -52,7 +64,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="..//index.html">
+  <a href="../index.html">
     <span class="fa fa-home fa-lg"></span>
      
   </a>
@@ -68,10 +80,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/ii-modules.html">02 Building modules in `SpaDES`</a>
+      <a href="../articles/i-introduction.html">01 Introduction to `SpaDES`</a>
     </li>
     <li>
-      <a href="../articles/i-introduction.html">01 Introduction to `SpaDES`</a>
+      <a href="../articles/ii-modules.html">02 Building modules in `SpaDES`</a>
     </li>
   </ul>
 </li>
@@ -100,7 +112,7 @@
     <div class="page-header">
       <h1>
         Reference
-        <small>version&nbsp;0.1.0</small>
+        <small>version&nbsp;0.1.1</small>
       </h1>
     </div>
 
@@ -146,15 +158,15 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="checkModuleLocal.html">checkModuleLocal</a></code> </p>
-          </td>
-          <td><p>Check for the existence of a module locally</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="checkModule.html">checkModule</a></code> </p>
           </td>
           <td><p>Check for the existence of a remote module</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="checkModuleLocal.html">checkModuleLocal</a></code> </p>
+          </td>
+          <td><p>Check for the existence of a module locally</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -189,15 +201,15 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="copyModule.html">copyModule</a></code> </p>
-          </td>
-          <td><p>Create a copy of an existing module</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="Copy.html">Copy</a></code> </p>
           </td>
           <td><p>Copy for simList class objects</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="copyModule.html">copyModule</a></code> </p>
+          </td>
+          <td><p>Create a copy of an existing module</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -243,12 +255,6 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="dwrpnorm2.html">dwrpnorm2</a></code> </p>
-          </td>
-          <td><p>Vectorized wrapped normal density function</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="eventDiagram.html">eventDiagram</a></code> </p>
           </td>
           <td><p>Simulation event diagram</p></td>
@@ -279,12 +285,9 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="F.html">F</a></code> </p>
+            <p><code><a href="findSimList.html">.findSimList</a></code> </p>
           </td>
-          <td><p><code>F</code> allows the user to access functions from their module. It should
-be unnecessary to use this as namespacing should take care of it. But, if
-the user wants to specificy a function this way, it will work too.
-To access a function from within a module, you can use <code><a href='reference/objects.html'>F(sim)$functionName</a></code></p></td>
+          <td><p>Find simList in a nested list</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -318,15 +321,15 @@ To access a function from within a module, you can use <code><a href='reference/
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="ls-method.html">ls.simList</a></code> <code><a href="ls-method.html">ls</a></code> <code><a href="ls-method.html">objects.simList</a></code> <code><a href="ls-method.html">objects</a></code> </p>
-          </td>
-          <td><p>List simulation objects</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="ls_str-method.html">ls.str.simList</a></code> <code><a href="ls_str-method.html">ls.str</a></code> </p>
           </td>
           <td><p>List simulation objects and their structure</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="ls-method.html">ls.simList</a></code> <code><a href="ls-method.html">ls</a></code> <code><a href="ls-method.html">objects.simList</a></code> <code><a href="ls-method.html">objects</a></code> </p>
+          </td>
+          <td><p>List simulation objects</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -345,6 +348,12 @@ To access a function from within a module, you can use <code><a href='reference/
             <p><code><a href="moduleCoverage.html">moduleCoverage</a></code> </p>
           </td>
           <td><p>Calculate module coverage of unit tests</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="moduleDefaults.html">moduleDefaults</a></code> </p>
+          </td>
+          <td><p>Defaults values used in defineModule</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -372,6 +381,12 @@ To access a function from within a module, you can use <code><a href='reference/
         </tr><tr>
           <!--  -->
           <td>
+            <p><code><a href="newModule.html">newModule</a></code> </p>
+          </td>
+          <td><p>Create new module from template</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
             <p><code><a href="newModuleCode.html">newModuleCode</a></code> </p>
           </td>
           <td><p>Create new module code file</p></td>
@@ -381,12 +396,6 @@ To access a function from within a module, you can use <code><a href='reference/
             <p><code><a href="newModuleDocumentation.html">newModuleDocumentation</a></code> </p>
           </td>
           <td><p>Create new module documentation</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="newModule.html">newModule</a></code> </p>
-          </td>
-          <td><p>Create new module from template</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -474,21 +483,33 @@ To access a function from within a module, you can use <code><a href='reference/
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="progressBar.html">newProgressBar</a></code> <code><a href="progressBar.html">setProgressBar</a></code> </p>
-          </td>
-          <td><p>Progress bar</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="progress.html">progressInterval</a></code> <code><a href="progress.html">progressInterval<-</a></code> <code><a href="progress.html">progressType</a></code> <code><a href="progress.html">progressType<-</a></code> </p>
           </td>
           <td><p>Get and set simulation progress bar details</p></td>
         </tr><tr>
           <!--  -->
           <td>
+            <p><code><a href="progressBar.html">newProgressBar</a></code> <code><a href="progressBar.html">setProgressBar</a></code> </p>
+          </td>
+          <td><p>Progress bar</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="quickCheck.html">.quickCheck</a></code> </p>
+          </td>
+          <td><p>The <code>SpaDES.core</code> variable to switch between quick and robust checking</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
             <p><code><a href="rasterToMemory.html">rasterToMemory</a></code> </p>
           </td>
           <td><p>Read raster to memory</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="remoteFileSize.html">remoteFileSize</a></code> </p>
+          </td>
+          <td><p>Determine the size of a remotely hosted file</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -552,7 +573,7 @@ To access a function from within a module, you can use <code><a href='reference/
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="simList-accessors-paths.html">paths</a></code> <code><a href="simList-accessors-paths.html">paths<-</a></code> <code><a href="simList-accessors-paths.html">cachePath</a></code> <code><a href="simList-accessors-paths.html">cachePath<-</a></code> <code><a href="simList-accessors-paths.html">inputPath</a></code> <code><a href="simList-accessors-paths.html">inputPath<-</a></code> <code><a href="simList-accessors-paths.html">outputPath</a></code> <code><a href="simList-accessors-paths.html">outputPath<-</a></code> <code><a href="simList-accessors-paths.html">modulePath</a></code> <code><a href="simList-accessors-paths.html">modulePath<-</a></code> </p>
+            <p><code><a href="simList-accessors-paths.html">paths</a></code> <code><a href="simList-accessors-paths.html">paths<-</a></code> <code><a href="simList-accessors-paths.html">cachePath</a></code> <code><a href="simList-accessors-paths.html">cachePath<-</a></code> <code><a href="simList-accessors-paths.html">inputPath</a></code> <code><a href="simList-accessors-paths.html">inputPath<-</a></code> <code><a href="simList-accessors-paths.html">outputPath</a></code> <code><a href="simList-accessors-paths.html">outputPath<-</a></code> <code><a href="simList-accessors-paths.html">modulePath</a></code> <code><a href="simList-accessors-paths.html">modulePath<-</a></code> <code><a href="simList-accessors-paths.html">dataPath</a></code> </p>
           </td>
           <td><p>Specify paths for modules, inputs, and outputs</p></td>
         </tr><tr>
@@ -584,29 +605,7 @@ To access a function from within a module, you can use <code><a href='reference/
           <td>
             <p><code><a href="spades.html">spades</a></code> </p>
           </td>
-          <td><p>setMethod(
-  "scheduleEvent",
-  signature(
-    sim = "simList",
-    eventTime = "NULL",
-    moduleName = "character",
-    eventType = "character",
-    eventPriority = "numeric"
-  ),
-  definition = function(sim,
-                        eventTime,
-                        moduleName,
-                        eventType,
-                        eventPriority) 
-    warning(
-      paste(
-        "Invalid or missing eventTime. This is usually",
-        "caused by an attempt to scheduleEvent at time NULL",
-        "or by using an undefined parameter."
-      )
-    )
-    return(invisible(sim))
-  )</p></td>
+          <td><p>Run a spatial discrete event simulation</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -657,7 +656,7 @@ To access a function from within a module, you can use <code><a href='reference/
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

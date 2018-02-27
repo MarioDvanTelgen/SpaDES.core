@@ -45,7 +45,7 @@ fileName <- function(x) {
 #'
 #' @author Eliot McIntire and Alex Chubaty
 fileExt <- function(x) {
-  NAs <- is.na(x)
+  NAs <- is.na(x) # nolint
   out <- rep(NA, length(x))
   if (!any(NAs)) {
     filenames <- basename(unlist(x[!NAs]))
@@ -62,7 +62,7 @@ fileExt <- function(x) {
 }
 
 # The load doEvent
-doEvent.load <- function(sim, eventTime, eventType, debug = FALSE) {
+doEvent.load <- function(sim, eventTime, eventType, debug = FALSE) { # nolint
   if (eventType == "inputs") {
     sim <- loadFiles(sim)
   }
@@ -86,11 +86,11 @@ doEvent.load <- function(sim, eventTime, eventType, debug = FALSE) {
 #' @param ...      Additional arguments.
 #'
 #' @author Eliot McIntire and Alex Chubaty
-#' @docType methods
 #' @export
 #' @importFrom data.table := data.table rbindlist
 #' @importFrom stringi stri_detect_fixed
 #' @importFrom raster inMemory
+#' @importFrom utils getFromNamespace
 #' @include simulation-simInit.R
 #' @name loadFiles
 #' @rdname loadFiles
@@ -153,10 +153,11 @@ setMethod(
       # Check if arguments is a named list; the name may be concatenated
       # with the "arguments", separated by a ".". This will extract that.
       if ((length(arguments) > 0) & !is.null(names(arguments))) {
-        names(arguments) <- sapply(strsplit(
-          names(filelist)[pmatch("arguments", names(filelist))], ".", fixed = TRUE),
-          function(x) x[-1]
-        )
+        if (grepl(".", fixed = TRUE, names(filelist)[pmatch("arguments", names(filelist))]))
+          names(arguments) <- sapply(strsplit(
+            names(filelist)[pmatch("arguments", names(filelist))], ".", fixed = TRUE),
+            function(x) x[-1]
+          )
       }
 
       # check if arguments should be, i.e,. recycled
@@ -175,17 +176,26 @@ setMethod(
         loadFun <- filelist$fun
         for (y in which(cur)) {
           nam <- names(arguments[y])
-
           if (is.na(filelist$file[y])) {
             # i.e., only for objects
-            objList <- list()
-            if (exists(filelist$objectName[y])) {
-              objList <- list(get(filelist$objectName[y]))
-              names(objList) <- filelist$objectName[y]
+            if (!is.na(loadFun[y])) {
+              if (is.na(loadPackage[y])) {
+                if (exists(loadFun[y])) {
+                  objList <- list(do.call(get(loadFun[y]), arguments[[y]]))
+                } else {
+                  stop("'inputs' often requires (like now) that package be specified",
+                       " explicitly in the 'fun' column, e.g., base::load")
+                }
+
+              } else {
+                objList <- list(do.call(getFromNamespace(loadFun[y], loadPackage[y]), arguments[[y]])) # nolint
+              }
+
             } else {
-              objList2 <- .findObjects(filelist$objectName[y])
-              names(objList) <- filelist$objectName[y]
+              objListEnv <- quickPlot::whereInStack(filelist$objectName[y])
+              objList <- list(get(filelist$objectName[y], objListEnv))
             }
+            names(objList) <- filelist$objectName[y]
             if (length(objList) > 0) {
               list2env(objList, envir = sim@.envir)
               filelist[y, "loaded"] <- TRUE
@@ -197,12 +207,27 @@ setMethod(
             }
           } else {
             # for files
+            if (is.na(loadPackage[y])) {
+              if (!exists(loadFun[y])) {
+                stop("'inputs' often requires (like now) that package be specified",
+                     " explicitly in the 'fun' column, e.g., base::load")
+              }
+            }
             if (!is.null(nam)) {
               argument <- list(unname(unlist(arguments[y])), filelist[y, "file"])
-              names(argument) <- c(nam, names(formals(getFromNamespace(loadFun[y], loadPackage[y])))[1])
+              if (is.na(loadPackage[y])) {
+                names(argument) <- c(nam, names(formals(get(loadFun[y])))[1])
+              } else {
+                names(argument) <- c(nam, names(formals(getFromNamespace(loadFun[y], loadPackage[y])))[1])
+              }
+
             } else {
               argument <- list(filelist[y, "file"])
-              names(argument) <- names(formals(getFromNamespace(loadFun[y], loadPackage[y])))[1]
+              if (is.na(loadPackage[y])) {
+                names(argument) <- names(formals(get(loadFun[y])))[1]
+              } else {
+                names(argument) <- names(formals(getFromNamespace(loadFun[y], loadPackage[y])))[1]
+              }
             }
 
             # The actual load call
@@ -211,21 +236,28 @@ setMethod(
                       args = argument, envir = sim@.envir)
 
             } else {
-              sim[[filelist[y, "objectName"]]] <- do.call(getFromNamespace(loadFun[y], loadPackage[y]),
-                                                          args = argument)
+              sim[[filelist[y, "objectName"]]] <-
+                if (is.na(loadPackage[y])) {
+                  do.call(get(loadFun[y]), args = argument)
+                } else {
+                  do.call(getFromNamespace(loadFun[y], loadPackage[y]),
+                          args = argument)
+                }
+
+
             }
             filelist[y, "loaded"] <- TRUE
 
             if (loadFun[y] == "raster") {
               message(paste0(
-                filelist[y, "objectName"], " read from ", filelist[y, "file"], " using ", loadFun[y],
+                filelist[y, "objectName"], " read from ", filelist[y, "file"], " using ", loadFun[y], # nolint
                 "(inMemory=", inMemory(sim[[filelist[y, "objectName"]]]), ")",
                 ifelse(filelist[y, "loadTime"] != sim@simtimes[["start"]],
                        paste("\n  at time", filelist[y, "loadTime"]), "")
               ))
             } else {
               message(paste0(
-                filelist[y, "objectName"], " read from ", filelist[y, "file"], " using ", loadFun[y],
+                filelist[y, "objectName"], " read from ", filelist[y, "file"], " using ", loadFun[y], # nolint
                 ifelse(filelist[y, "loadTime"] != sim@simtimes[["start"]],
                        paste("\n   at time", filelist[y, "loadTime"]), "")
               ))
@@ -290,7 +322,6 @@ setMethod("loadFiles",
 #' @name rasterToMemory
 #' @importFrom raster getValues raster setValues
 #' @export
-#' @docType methods
 #' @rdname rasterToMemory
 #'
 #' @author Eliot McIntire and Alex Chubaty

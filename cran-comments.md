@@ -1,54 +1,37 @@
-## New submission
+## Resubmission
 
-This is a spin off of an existing CRAN package (`SpaDES`), which we have split due to growing package size.
+This is a major update to our package. Many external and internal changes, as described in NEWS.md
 
 ## Test environments
 
 ### Previous R versions
-* Ubuntu 14.04        (travis-ci), R 3.3.3
+* Ubuntu 14.04.5      (travis-ci), R 3.3.0
+* Windows              (appveyor), R 3.3.0
+
+* Ubuntu 14.04.5      (travis-ci), R 3.3.3
 * Windows              (appveyor), R 3.3.3
 * Windows 7               (local), R 3.3.3
 
 ### Current R versions
-* macOS Sierra         (local), R 3.4.1
-* OS X El Capitan  (travis-ci), R 3.4.1
-* Ubuntu 14.04     (travis-ci), R 3.4.1
-* Ubuntu 16.04         (local), R 3.4.1
-* Windows           (appveyor), R 3.4.1
-* Windows        (win-builder), R 3.4.1
-* Windows 7            (local), R 3.4.1
+* OSX Sierra 10.12.6 (travis-ci), R 3.4.3 
+* Ubuntu 14.04.5     (travis-ci), R 3.4.3
+* Debian 4.9.51          (local), R 3.4.3
+* Windows             (appveyor), R 3.4.3
+* Windows          (win-builder), R 3.4.3
+* Windows 7              (local), R 3.4.3
 
 ### Development R version
-* Debian:testing (rocker/r-devel), R 3.5.0 (2017-07-26 r72972)
-* Ubuntu 14.04        (travis-ci), R 3.5.0 (2017-08-21 r73109)
-* Ubuntu 16.04            (local), R 3.5.0 (2017-08-21 r73109)
-* Windows              (appveyor), R 3.5.0 (2017-08-19 r73108)
-* Windows           (win-builder), R 3.5.0 (2017-08-19 r73108)
+* Ubuntu 14.04        (travis-ci), R 3.5.0 (2018-01-24 r74157)
+* Windows                 (local), R 3.5.0 (2018-01-24 r74157) 
 
 ## R CMD check results
 
-There were no ERRORs or WARNINGs
+There is one *intermittent* error related to a missing tk85.dll on windows R 3.4.3, 32 bit. We have tested it on Windows 32 bit with R 3.4.0 (no error), R 3.4.1  (no error), R 3.4.2 (error) and R 3.4.3 (intermittent error), R 3.5 (R-devel) (no error) Windows, and it only occurs on R 3.4.3 . There is are no other combinations of Windows, Linux, Mac and R-old release, R-release, and R-devel to have the error. The error indicates that tk85.dll is not present; however, tk86.dll *is* present and delivered with R, so there is something in some internals somewhere that is searching for a mismatched dll between the one being requested and the one that is shipped with R. This error is occurring because of the package `RandomFields` from which we import one function.
+We feel that this is not something that our package can address. 
 
-There was 1 NOTE:
-
-1. There are multiple parts to this note:
-
-    a. This is a new package submission:
-    
-            Maintainer: 'Alex Chubaty <alexander.chubaty@canada.ca>'
-            
-            New submission
-
-    b. Some words were flagged as possibly mispelled, but they are false positives.
-     
-            Possibly mis-spelled words in DESCRIPTION: 
-              DES (5:58, 6:65)
-              modularity (7:16)
-              
 ## Downstream dependencies
 
-There are currently no downstream dependencies of this package.
-However, as we submit further `SpaDES` spinoff packages, this package will become a dependency for the following packages:
+There are currently 2 downstream dependencies of this package. There are no errors, warnings or notes arising from this package on those downstream packages.
 
 - `SpaDES` (Imports)
 - `SpaDES.addins` (Imports)

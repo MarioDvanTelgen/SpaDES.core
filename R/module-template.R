@@ -11,9 +11,9 @@
 #' @return  Invoked for its side effect of opening a file for editing.
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @keywords internal
 #' @rdname fileEdit
+#' @importFrom utils file.edit
 #'
 .fileEdit <- function(file) {
   if (Sys.getenv("RSTUDIO") == "1") {
@@ -87,7 +87,6 @@
 #' A message with the correct lines to copy and paste is provided.
 #'
 #' @author Alex Chubaty and Eliot McIntire
-#' @docType methods
 #' @export
 #' @family module creation helpers
 #' @rdname newModule
@@ -181,7 +180,6 @@ setMethod(
 #'                   specifying the names of child modules.
 #'
 #' @author Eliot McIntire and Alex Chubaty
-#' @docType methods
 #' @export
 #' @rdname newModuleCode
 #'
@@ -213,33 +211,34 @@ setMethod(
 
     cat("
 # Everything in this file gets sourced during simInit, and all functions and objects
-# are put into the simList. To use objects and functions, use sim$xxx.
+# are put into the simList. To use objects, use sim$xxx, and are thus globally available
+# to all modules. Functions can be used without sim$ as they are namespaced, like functions
+# in R packages. If exact location is required, functions will be: sim$<moduleName>$FunctionName
 defineModule(sim, list(
   name = \"", name, "\",
-  description = \"insert module description here\",
-  keywords = c(\"insert key words here\"),
+  description = ", moduleDefaults$description, ", #\"insert module description here\",
+  keywords = ", moduleDefaults$keywords, ", # c(\"insert key words here\"),
   authors = ", getOption("devtools.desc.author",
                          "c(person(c(\"First\", \"Middle\"), \"Last\", email = \"email@example.com\", role = c(\"aut\", \"cre\")))"), ",
   childModules = ", children_char, ",
-  version = list(SpaDES.core = \"", as.character(packageVersion("SpaDES.core")), "\", ",
+  version = list(SpaDES.core = \"", as.character(utils::packageVersion("SpaDES.core")), "\", ",
         name, " = \"0.0.1\"", if (type == "parent") paste0(", ", children, " = \"0.0.1\""),
         "),
-  ",
-  if (type == "child") "spatialExtent = raster::extent(rep(NA_real_, 4)),
-  timeframe = as.POSIXlt(c(NA, NA)),
-  ",
-  "timeunit = \"year\"," ,"
+  ", if (type == "child") {paste0("spatialExtent = ", deparse(moduleDefaults$extent) ,",")},
+  "
+  timeframe = ", deparse(moduleDefaults$timeframe), ",
+  timeunit = ", deparse(moduleDefaults$timeunit), ",","
   citation = list(\"citation.bib\"),
   documentation = list(\"README.txt\", \"", name, ".Rmd\")",
-  if (type == "child") ",
-  reqdPkgs = list(),
+  if (type == "child") {paste0(",
+  reqdPkgs = ", deparse(moduleDefaults$reqdPkgs), ",
   parameters = rbind(
     #defineParameter(\"paramName\", \"paramClass\", value, min, max, \"parameter description\"),
     defineParameter(\".plotInitialTime\", \"numeric\", NA, NA, NA, \"This describes the simulation time at which the first plot event should occur\"),
     defineParameter(\".plotInterval\", \"numeric\", NA, NA, NA, \"This describes the simulation time interval between plot events\"),
     defineParameter(\".saveInitialTime\", \"numeric\", NA, NA, NA, \"This describes the simulation time at which the first save event should occur\"),
     defineParameter(\".saveInterval\", \"numeric\", NA, NA, NA, \"This describes the simulation time interval between save events\"),
-    defineParameter(\".useCache\", \"numeric\", FALSE, NA, NA, \"Should this entire module be run with caching activated? This is generally intended for data-type modules, where stochasticity and time are not relevant\")
+    defineParameter(\".useCache\", \"logical\", FALSE, NA, NA, \"Should this entire module be run with caching activated? This is generally intended for data-type modules, where stochasticity and time are not relevant\")
   ),
   inputObjects = bind_rows(
     #expectsInput(\"objectName\", \"objectClass\", \"input object description\", sourceURL, ...),
@@ -248,7 +247,7 @@ defineModule(sim, list(
   outputObjects = bind_rows(
     #createsOutput(\"objectName\", \"objectClass\", \"output object description\", ...),
     createsOutput(objectName = NA, objectClass = NA, desc = NA)
-  )","
+  )")},"
 ))\n",
       file = filenameR, fill = FALSE, sep = "")
 
@@ -257,7 +256,7 @@ defineModule(sim, list(
 ## event types
 #   - type `init` is required for initialiazation
 
-doEvent.", name, " = function(sim, eventTime, eventType, debug = FALSE) {
+doEvent.", name, " = function(sim, eventTime, eventType) {
   switch(
     eventType,
     init = {
@@ -275,7 +274,7 @@ doEvent.", name, " = function(sim, eventTime, eventType, debug = FALSE) {
       # ! ----- EDIT BELOW ----- ! #
       # do stuff for this event
 
-      #Plot(objectFromModule) # uncomment this, replace with object to plot
+      #plotFun(sim) # uncomment this, replace with object to plot
       # schedule future event(s)
 
       # e.g.,
@@ -356,10 +355,10 @@ Save <- function(sim) {
 }
 
 ### template for plot events
-Plot <- function(sim) {
+plotFun <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
   # do stuff for this event
-  #Plot(\"object\")
+  #Plot(sim$object)
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
@@ -369,8 +368,8 @@ Plot <- function(sim) {
 Event1 <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
   # THE NEXT TWO LINES ARE FOR DUMMY UNIT TESTS; CHANGE OR DELETE THEM.
-  sim$event1Test1 <- \" this is test for event 1. \" # for dummy unit test
-  sim$event1Test2 <- 999 # for dummy unit test
+  # sim$event1Test1 <- \" this is test for event 1. \" # for dummy unit test
+  # sim$event1Test2 <- 999 # for dummy unit test
 
 
   # ! ----- STOP EDITING ----- ! #
@@ -381,15 +380,15 @@ Event1 <- function(sim) {
 Event2 <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
   # THE NEXT TWO LINES ARE FOR DUMMY UNIT TESTS; CHANGE OR DELETE THEM.
-  sim$event2Test1 <- \" this is test for event 2. \" # for dummy unit test
-  sim$event2Test2 <- 777  # for dummy unit test
+  # sim$event2Test1 <- \" this is test for event 2. \" # for dummy unit test
+  # sim$event2Test2 <- 777  # for dummy unit test
 
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
 }
 
-.inputObjects = function(sim) {
+.inputObjects <- function(sim) {
   # Any code written here will be run during the simInit for the purpose of creating
   # any objects required by this module and identified in the inputObjects element of defineModule.
   # This is useful if there is something required before simulation to produce the module
@@ -421,7 +420,6 @@ Event2 <- function(sim) {
 #' @inheritParams newModuleCode
 #'
 #' @author Eliot McIntire and Alex Chubaty
-#' @docType methods
 #' @importFrom reproducible checkPath
 #' @export
 #' @family module creation helpers
@@ -470,14 +468,13 @@ For help writing in R Markdown, see http://rmarkdown.rstudio.com/.
 # Usage
 
 ```{r module_usage}
-library(igraph)
-library(SpaDES.core)
+library(SpaDES)
 
-moduleDir <- file.path(\"", path, "\")
-inputDir <- file.path(moduleDir, \"inputs\") %>% reproducible::checkPath(create = TRUE)
-outputDir <- file.path(moduleDir, \"outputs\")
-cacheDir <- file.path(outputDir, \"cache\")
+setPaths(modulePath = file.path(\"", path, "\"))
+getPaths() # shows where the 4 relevant paths are
+
 times <- list(start = 0, end = 10)
+
 parameters <- list(
   #.progress = list(type = \"text\", interval = 1), # for a progress bar
   ## If there are further modules, each can have its own set of parameters:
@@ -486,17 +483,13 @@ parameters <- list(
 )
 modules <- list(\"", name, "\")
 objects <- list()
-paths <- list(
-  cachePath = cacheDir,
-  modulePath = moduleDir,
-  inputPath = inputDir,
-  outputPath = outputDir
-)
+inputs <- list()
+outputs <- list()
 
 mySim <- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects, paths = paths)
+                 objects = objects)
 
-spades(mySim)
+mySimOut <- spades(mySim)
 ```
 
 # Events
@@ -603,7 +596,6 @@ setMethod("newModuleDocumentation",
 #'              Default \code{TRUE}.
 #'
 #' @author Eliot McIntire and Alex Chubaty
-#' @docType methods
 #' @importFrom reproducible checkPath
 #' @export
 #' @family module creation helpers
@@ -745,7 +737,6 @@ test_that(\"test Event1 and Event2.\", {
 #' and paste is provided.
 #'
 #' @author Eliot McIntire
-#' @docType methods
 #' @export
 #' @importFrom raster extension
 #' @importFrom reproducible checkPath
@@ -850,7 +841,6 @@ setMethod("openModules",
 #' @return Invisible logical indicating success (\code{TRUE}) or failure (\code{FALSE}).
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @export
 #' @rdname copyModule
 #'
@@ -939,12 +929,12 @@ setMethod("copyModule",
 #'                (the default flags are \code{"-r9X"}).
 #'
 #' @author Eliot McIntire and Alex Chubaty
-#' @docType methods
 #' @export
 #' @importFrom reproducible checkPath
+#' @importFrom utils zip
 #' @rdname zipModule
 #'
-setGeneric("zipModule", function(name, path, version, data=FALSE, ...) {
+setGeneric("zipModule", function(name, path, version, data = FALSE, ...) {
   standardGeneric("zipModule")
 })
 
@@ -958,15 +948,21 @@ setMethod(
     callingWd <- getwd()
     on.exit(setwd(callingWd), add = TRUE)
     setwd(path)
-    zipFileName = paste0(name, "_", version, ".zip")
-    print(paste("Zipping module into zip file:", zipFileName))
+    zipFileName <- paste0(name, "_", version, ".zip")
+    message(crayon::green(paste("Zipping module into zip file:", zipFileName)), sep = "")
 
     allFiles <- dir(path = file.path(name), recursive = TRUE, full.names = TRUE)
-    allFiles <- grep(paste0(name, "_+.+.zip"), allFiles, value = TRUE, invert = TRUE) # moduleName_....zip only
-    if (!data)
-      allFiles <- grep(file.path(name, "data"),  allFiles, invert = TRUE, value = TRUE)
 
-    zip(zipFileName, files = allFiles, ...)#, extras = c("-x"), ...)
+    # filter out 'moduleName_*.zip' from results
+    allFiles <- grep(paste0(name, "_+.+.zip"), allFiles, value = TRUE, invert = TRUE)
+
+    if (!data) {
+      # filter out all data file but keep the 'CHECKSUMS.txt' file
+      allFiles <- grep(file.path(name, "data"),  allFiles, invert = TRUE, value = TRUE)
+      allFiles <- sort(c(allFiles, file.path(name, "data", "CHECKSUMS.txt")))
+    }
+
+    zip(zipFileName, files = allFiles, ...)
     file.copy(zipFileName, to = paste0(name, "/", zipFileName), overwrite = TRUE)
     file.remove(zipFileName)
 })

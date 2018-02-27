@@ -21,7 +21,8 @@ Updated \code{simList} object.
 }
 \description{
 Specify a new module's metadata as well as object and package dependencies.
-Packages are loaded during this call.
+Packages are loaded during this call. Any or all of these can be missing, with missing
+values set to defaults
 }
 \section{Required metadata elements}{
 
@@ -51,7 +52,7 @@ Packages are loaded during this call.
                        if a character or numeric are supplied).
                        The module developer should update manually this with each change
                        that is made to the module. See \url{http://semver.org/}
-                       for a widely accepted standard for version numering.\cr
+                       for a widely accepted standard for version numbering.\cr
    \code{spatialExtent} \tab The spatial extent of the module supplied via
                              \code{raster::extent}. This is currently unimplemented.
                              Once implemented, this should define what spatial region this
@@ -75,7 +76,13 @@ Packages are loaded during this call.
                              This is currently not parsed by SpaDES;
                              it is for human readers only.\cr\cr
    \code{reqdPkgs} \tab List of R package names required by the module. These
-                        packages will be loaded when \code{simInit} is called. \cr
+                        packages will be loaded when \code{simInit} is called.
+                        \code{\link[reproducible]{Require}} will be used internally
+                        to load if available, and install if not available.
+                        Because \code{\link[reproducible]{Require}} can also download from
+                        GitHub.com, these packages can specify package names stored
+                        on GitHub, e.g., \code{"PredictiveEcology/SpaDES.core@development"}.
+                        \cr
    \code{parameters} \tab A data.frame specifying the parameters used in the module.
                           Usually produced by \code{rbind}-ing the outputs of multiple
                           \code{\link{defineParameter}} calls. These parameters indicate
@@ -124,7 +131,7 @@ Packages are loaded during this call.
   newModule("test", path = tempdir())
 
   ## view the resulting module file
-  #file.edit(file.path(tempdir(), "test", "test.R"))
+  if (interactive()) file.edit(file.path(tempdir(), "test", "test.R"))
 
   # The default defineModule created by newModule is currently (SpaDES version 1.3.1.9044):
   defineModule(sim, list(
@@ -143,7 +150,7 @@ Packages are loaded during this call.
     reqdPkgs = list(),
     parameters = rbind(
       #defineParameter("paramName", "paramClass", value, min, max,
-      "parameter description")),
+      # "parameter description")),
       defineParameter(".plotInitialTime", "numeric", NA, NA, NA,
       "This describes the simulation time at which the first plot event should occur"),
       defineParameter(".plotInterval", "numeric", NA, NA, NA,
@@ -165,6 +172,9 @@ Packages are loaded during this call.
 
 }
 
+}
+\seealso{
+moduleDefaults
 }
 \author{
 Alex Chubaty

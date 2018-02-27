@@ -6,7 +6,6 @@
 #' @return Returns a named list of the core modules.
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @keywords internal
 #' @name .coreModules
 #' @rdname coreModules
@@ -40,7 +39,6 @@
 #' @return Returns an empty event list.
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @importFrom data.table data.table
 #' @keywords internal
 #' @name emptyEventList
@@ -71,8 +69,6 @@ setMethod(
     set(eeldt, , "moduleName", moduleName)
     set(eeldt, , "eventType", eventType)
     set(eeldt, , "eventPriority", eventPriority)
-    # data.table(eventTime = eventTime, moduleName = moduleName,
-    #           eventType = eventType, eventPriority = eventPriority)
     eeldt
     # don't set key because it is set later when used
 })
@@ -84,47 +80,11 @@ setMethod(
             eventType = "missing", eventPriority = "missing"),
   definition = function() {
     copy(.emptyEventListDT)
-    #data.table(eventTime = numeric(0L), moduleName = character(0L),
-    #           eventType = character(0L), eventPriority = numeric(0L))
 })
-
-#' @rdname emptyEventList
-.emptyEventListObj <- .emptyEventList()
-
-.refreshEventQueues <- function() {
-  assignInMyNamespace(".lengthEventsDT", length(.eventsDT) + 1)
-
-  assignInMyNamespace(".eventsDT", lapply(0:99, function(i) {
-    data.table(eventTime = integer(i), moduleName = character(i),
-               eventType = character(i), eventPriority = numeric(i))
-  }))
-  assignInMyNamespace(".singleEventListDT", data.table(eventTime = numeric(1L), moduleName = character(1L),
-                                                       eventType = character(1L), eventPriority = numeric(1L)))
-  assignInMyNamespace(".currentEventDT", .emptyEventList(numeric(1), character(1), character(1), numeric(1)))
-
-}
-
 
 #' @rdname emptyEventList
 .emptyEventListCols <- colnames(.emptyEventList())
 
-
-#' @rdname emptyEventList
-.emptyEventListNA <- .emptyEventList(NA_real_, NA_character_, NA_character_, NA_integer_)
-
-#' @rdname emptyEventList
-.currentEventDT <- list()
-
-#' @rdname emptyEventList
-.eventsDT <- list()
-
-#' @rdname emptyEventList
-.numColsEventList <- length(.emptyEventListCols)
-
-#' @rdname emptyEventList
-.lengthEventsDT <- length(.eventsDT) + 1
-
-.refreshEventQueues()
 
 ################################################################################
 #' Default (empty) metadata
@@ -134,12 +94,11 @@ setMethod(
 #'
 #' @param x  Not used. Should be missing.
 #'
-#' @importFrom raster extent
-#' @keywords internal
-#' @include simList-class.R
-#' @docType methods
-#' @rdname emptyMetadata
 #' @author Alex Chubaty
+#' @importFrom raster extent
+#' @include simList-class.R
+#' @keywords internal
+#' @rdname emptyMetadata
 #'
 setGeneric(".emptyMetadata", function(x) {
   standardGeneric(".emptyMetadata")
@@ -181,7 +140,6 @@ setMethod(
 #' searched in the call stack. Default is "simInit"
 #'
 #' @author Eliot McIntire
-#' @docType methods
 #' @keywords internal
 #' @name findObjects
 #' @rdname findObjects
@@ -210,51 +168,62 @@ setMethod(
 #' @param removeOthers Logical. If \code{TRUE}, then only the packages in \code{pkgs}
 #'                     will remain in the search path, i.e., all others will be removed.
 #'
+#' @param skipNamespacing Logical. If \code{FALSE}, then the running of an event in a module
+#'                        will not trigger a rearrangement of the search() path. This will
+#'                        generally speed up module simulations, but may create name
+#'                        conflicts between packages.
+#'
 #' @return Nothing. This is used for its side effects, which are "severe".
 #'
 #' @author Eliot McIntire
 #' @keywords internal
 #' @rdname modifySearchPath
-.modifySearchPath <- function(pkgs, removeOthers = FALSE) {
-  pkgs <- c("SpaDES.core", pkgs)
-  pkgs <- unlist(pkgs)[!(pkgs %in% .pkgEnv$corePackagesVec)]
-  pkgPositions <- pmatch(paste0("package:",unlist(pkgs)), search())
+.modifySearchPath <- function(pkgs, removeOthers = FALSE,
+                              skipNamespacing = !getOption("spades.switchPkgNamespaces")) {
+  if (!skipNamespacing) {
+    pkgs <- c("SpaDES.core", pkgs)
+    pkgs <- unlist(pkgs)[!(pkgs %in% .pkgEnv$corePackagesVec)]
+    pkgPositions <- pmatch(paste0("package:", unlist(pkgs)), search())
 
-  # Find all packages that are not in the first sequence after .GlobalEnv
-  whNotAtTop <- !((seq_along(pkgPositions) + 1) %in% pkgPositions)
+    # Find all packages that are not in the first sequence after .GlobalEnv
+    whNotAtTop <- !((seq_along(pkgPositions) + 1) %in% pkgPositions)
 
-  if (any(whNotAtTop)) {
-    if (removeOthers) {
-      pkgs <- setdiff(search(), pkgs)
-      pkgs <- grep(pkgs, pattern = .pkgEnv$corePackages, invert = TRUE, value = TRUE)
-      whRm <- seq_along(pkgs)
-    } else {
-      whRm <- which(pkgPositions > min(which(whNotAtTop)))
-      whAdd <- which(is.na(pkgPositions))
-    }
+    if (any(whNotAtTop)) {
+      if (removeOthers) {
+        pkgs <- setdiff(search(), pkgs)
+        pkgs <- grep(pkgs, pattern = .pkgEnv$corePackages, invert = TRUE, value = TRUE)
+        whRm <- seq_along(pkgs)
+      } else {
+        whRm <- which(pkgPositions > min(which(whNotAtTop)))
+        whAdd <- which(is.na(pkgPositions))
+      }
 
-    if (length(whRm) > 0) { # i.e,. ones that need reordering
-      suppressWarnings(
-        lapply(unique(gsub(pkgs, pattern = "package:", replacement = "")[whRm]), function(pack) {
-          try(detach(paste0("package:", pack), character.only = TRUE), silent = TRUE)
-        })
-      )
-    }
-    if (!removeOthers) {
-      if (length(c(whAdd, whRm))) {
-        suppressMessages(
-          lapply(rev(pkgs[c(whAdd, whRm)]), function(pack) {
-              try(attachNamespace(pack), silent = TRUE)
+      if (length(whRm) > 0) {
+        # i.e,. ones that need reordering
+        suppressWarnings(
+          lapply(unique(gsub(pkgs, pattern = "package:", replacement = "")[whRm]), function(pack) {
+            try(detach(paste0("package:", pack), character.only = TRUE), silent = TRUE)
           })
         )
       }
+      if (!removeOthers) {
+        if (length(c(whAdd, whRm))) {
+          suppressMessages(
+            lapply(rev(pkgs[c(whAdd, whRm)]), function(pack) {
+              try(attachNamespace(pack), silent = TRUE)
+            })
+          )
+        }
+      }
     }
   }
+
 }
 
 
-.pkgEnv$corePackages <- ".GlobalEnv|Autoloads|SpaDES.core|base|methods|utils|graphics|datasets|stats"
+.pkgEnv$corePackages <- ".GlobalEnv|Autoloads|SpaDES.core|base|methods|utils|graphics|datasets|stats" # nolint
 
 .pkgEnv$corePackagesVec <- unlist(strsplit(.pkgEnv$corePackages, split = "\\|"))
-.pkgEnv$corePackagesVec <- c(.pkgEnv$corePackagesVec[(1:2)], paste0("package:",.pkgEnv$corePackagesVec[-(1:2)]))
+.pkgEnv$corePackagesVec <- c(.pkgEnv$corePackagesVec[(1:2)],
+                             paste0("package:", .pkgEnv$corePackagesVec[-(1:2)]))
 

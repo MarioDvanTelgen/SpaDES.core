@@ -16,7 +16,6 @@ if (getRversion() >= "3.1.0") {
 #' @return A character vector.
 #'
 #' @include simList-accessors.R
-#' @docType methods
 #' @keywords internal
 #' @rdname ganttStatus
 #'
@@ -47,7 +46,7 @@ setMethod("ganttStatus",
 #'
 #' Internal function to convert the completed events list of a \code{simList}
 #' object to a list of \code{data.frame}s suitable to pass to a call to
-#' \code{\link[DiagrammeR]{mermaid}} to make a Gannt chart representing the
+#' \code{\link[DiagrammeR]{mermaid}} to make a Gantt chart representing the
 #' events in a completed simulation.
 #'
 #' @param sim  A \code{simList} object (typically corresponding to a
@@ -62,7 +61,6 @@ setMethod("ganttStatus",
 #' @return A list of data.frames
 #'
 #' @author Alex Chubaty
-#' @docType methods
 #' @include simList-accessors.R
 #' @keywords internal
 #' @rdname sim2gantt
@@ -72,6 +70,7 @@ setGeneric(".sim2gantt", function(sim, n, startDate, width) {
 })
 
 #' @rdname sim2gantt
+#' @importFrom utils tail
 setMethod(
   ".sim2gantt",
   signature(sim = "simList", n = "numeric", startDate = "character", width = "numeric"),
@@ -140,7 +139,6 @@ setMethod(
 #' @include simList-accessors.R
 #' @importFrom DiagrammeR mermaid
 #' @export
-#' @docType methods
 #' @rdname eventDiagram
 #'
 #' @author Alex Chubaty
@@ -233,7 +231,6 @@ setMethod(
 #' @include simList-accessors.R
 #' @importFrom DiagrammeR mermaid
 #' @export
-#' @docType methods
 #' @rdname objectDiagram
 #'
 #' @author Alex Chubaty
@@ -288,7 +285,6 @@ setMethod(
 #'
 #' @include simList-accessors.R
 #' @export
-#' @docType methods
 #' @rdname moduleDiagram
 #'
 #' @author Alex Chubaty
@@ -357,7 +353,6 @@ setMethod(
 #' @include simList-class.R
 #' @importFrom data.table rbindlist
 #' @export
-#' @docType methods
 #' @rdname moduleGraph
 #' @seealso moduleDiagram
 #'

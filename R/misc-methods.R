@@ -18,11 +18,9 @@ if (getRversion() >= "3.1.0") {
 #'          The values of matching elements in list \code{y}
 #'          replace the values in list \code{x}.
 #'
-#' @export
-#' @docType methods
-#' @rdname updateList
-#'
 #' @author Alex Chubaty
+#' @export
+#' @rdname updateList
 #'
 #' @examples
 #' L1 <- list(a = "hst", b = NA_character_, c = 43)
@@ -96,11 +94,9 @@ setMethod("updateList",
 #'
 #' @return An updated \code{list} with attributes.
 #'
-#' @export
-#' @docType methods
-#' @rdname append_attr
-#'
 #' @author Alex Chubaty and Eliot McIntire
+#' @export
+#' @rdname append_attr
 #'
 #' @examples
 #' library(igraph) # igraph exports magrittr's pipe operator
@@ -147,8 +143,8 @@ setMethod("append_attr",
 #' @seealso \code{\link{require}}.
 #'
 #' @export
-#' @docType methods
 #' @rdname loadPackages
+#' @importFrom utils install.packages installed.packages
 #'
 #' @author Alex Chubaty
 #'
@@ -172,7 +168,7 @@ setMethod(
     if (length(packageList)) {
       if (install) {
         repos <- getOption("repos")
-        if ( is.null(repos) | any(repos == "") ) {
+        if (is.null(repos) | any(repos == "")) {
           repos <- "https://cran.rstudio.com"
         }
         installed <- unname(installed.packages()[, "Package"])
@@ -182,10 +178,15 @@ setMethod(
 
       loaded <- suppressMessages(sapply(packageList, require, character.only = TRUE,
                                         quiet = TRUE, warn.conflicts = FALSE))
-
       if (any(!loaded)) {
-        stop("Some packages required for the simulation are not installed:\n",
+        alreadyLoaded <- unlist(lapply(packageList[!loaded], isNamespaceLoaded))
+        if (!all(alreadyLoaded)) {
+          stop("Some packages required for the simulation are not installed:\n",
              "    ", paste(names(loaded[-which(loaded)]), collapse = "\n    "))
+        } else {
+          message("Older version(s) of ",
+                  paste(collapse = ", ", packageList[!loaded]), " already loaded")
+        }
       }
 
       if (!quiet) {
@@ -229,13 +230,11 @@ setMethod("loadPackages",
 #'
 #' @return Character string representing the filename.
 #'
+#' @author Eliot McIntire and Alex Chubaty
+#' @export
 #' @importFrom fpCompare %==%
 #' @importFrom stringi stri_pad_left stri_pad_right
-#' @export
-#' @docType methods
 #' @rdname paddedFloatToChar
-#'
-#' @author Eliot McIntire and Alex Chubaty
 #'
 #' @examples
 #' paddedFloatToChar(1.25)
@@ -272,7 +271,6 @@ paddedFloatToChar <- function(x, padL = ceiling(log10(x + 1)), padR = 3, pad = "
 #' @return Character vector of random strings.
 #'
 #' @export
-#' @docType methods
 #' @rdname rndstr
 #'
 #' @author Alex Chubaty and Eliot McIntire
@@ -380,7 +378,6 @@ setMethod("rndstr",
 #' These (known) cases are checked manually and corrected.
 #'
 #' @export
-#' @docType methods
 #' @rdname classFilter
 #'
 #' @author Alex Chubaty
@@ -449,9 +446,9 @@ setMethod(
       # -------------------- #
       # using `inherits` doesn't work as expected in some cases,
       #  so we tweak the 'include' to work with those cases:
-      if ( ("numeric" %in% include) &
-           (inherits(get(w, envir = envir), "integer")) ) {
-             include <- c(include, "integer")
+      if (("numeric" %in% include) &
+          (inherits(get(w, envir = envir), "integer")) ) {
+        include <- c(include, "integer")
       }
       # --- end tweaking --- #
 
@@ -503,7 +500,6 @@ setMethod(
 #'
 #' @return An empty data.frame with structure needed for input/output fileTable.
 #'
-#' @docType methods
 #' @keywords internal
 #' @rdname fileTable
 #'
@@ -554,16 +550,17 @@ setMethod(
 #' Wrapper functions to access the packages options for default working directories.
 #'
 #' @param cachePath   The default local directory in which to cache simulation outputs.
-#'                    If not specified, defaults to \code{~/SpaDES/cache}.
+#'                    If not specified, defaults to \code{getOption("spades.cachePath")}.
 #'
 #' @param inputPath   The default local directory in which to look for simulation inputs
-#'                    If not specified, defaults to \code{~/SpaDES/inputs}.
+#'                    If not specified, defaults to \code{getOption("spades.inputPath")}.
 #'
-#' @param modulePath  The default local directory where modules and data will be downloaded and stored.
-#'                    If not specified, defaults to \code{~/SpaDES/modules}.
+#' @param modulePath  The default local directory where modules and data will be
+#'                    downloaded and stored.
+#'                    If not specified, defaults to \code{getOption("spades.modulePath")}.
 #'
 #' @param outputPath  The default local directory in which to save simulation outputs.
-#'                    If not specified, defaults to \code{~/SpaDES/outputs}.
+#'                    If not specified, defaults to \code{getOption("spades.outputPath")}.
 #'
 #' @return Returns a named list of the user's default working directories.
 #' \code{setPaths} is invoked for the side effect of setting these directories.
@@ -601,11 +598,12 @@ getPaths <- function() {
 #' @export
 #' @rdname setPaths
 #' @importFrom reproducible checkPath
+#' @importFrom R.utils getOption
 setPaths <- function(cachePath, inputPath, modulePath, outputPath) {
-  if (missing(cachePath)) cachePath <- "~/SpaDES/cache"     # nolint
-  if (missing(inputPath)) inputPath <- "~/SpaDES/inputs"    # nolint
-  if (missing(modulePath)) modulePath <- "~/SpaDES/modules" # nolint
-  if (missing(outputPath)) outputPath <- "~/SpaDES/outputs" # nolint
+  if (missing(cachePath)) cachePath <- getOption("spades.cachePath")     # nolint
+  if (missing(inputPath)) inputPath <- getOption("spades.inputPath")    # nolint
+  if (missing(modulePath)) modulePath <- getOption("spades.modulePath") # nolint
+  if (missing(outputPath)) outputPath <- getOption("spades.outputPath") # nolint
 
   options(spades.cachePath = cachePath, spades.inputPath = inputPath,
           spades.modulePath = modulePath, spades.outputPath = outputPath)

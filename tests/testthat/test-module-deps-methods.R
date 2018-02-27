@@ -116,13 +116,13 @@ test_that("depsEdgeList and depsGraph work", {
 
   # depsEdgeList
   el <- depsEdgeList(mySim)
-  el_from <- c("caribouMovement", "caribouMovement", "fireSpread", "fireSpread",
+  el_from <- c("fireSpread", "fireSpread",
                "fireSpread", "randomLandscapes", "randomLandscapes")
-  el_to <- c("caribouMovement", "fireSpread", "caribouMovement", "fireSpread",
-             "fireSpread", "caribouMovement", "fireSpread")
-  el_objName <- c("landscape", "landscape", "landscape", "landscape",
+  el_to <- c("caribouMovement", "fireSpread", "fireSpread",
+             "caribouMovement", "fireSpread")
+  el_objName <- c("landscape", "landscape",
                   "npixelsburned", "landscape", "landscape")
-  el_objClass <- c("RasterStack", "RasterStack", "RasterStack", "RasterStack",
+  el_objClass <- c("RasterStack", "RasterStack",
                    "numeric", "RasterStack", "RasterStack")
 
   expect_is(el, "data.table")
@@ -134,10 +134,10 @@ test_that("depsEdgeList and depsGraph work", {
 
   # .depsPruneEdges
   p <- .depsPruneEdges(el)
-  p_from <- c("randomLandscapes", "randomLandscapes")
-  p_to <- c("caribouMovement", "fireSpread")
-  p_objName <- c("landscape", "landscape")
-  p_objClass <- c("RasterStack", "RasterStack")
+  p_from <- c("fireSpread", "randomLandscapes", "randomLandscapes")
+  p_to <- c("caribouMovement", "caribouMovement", "fireSpread")
+  p_objName <- c("landscape", "landscape", "landscape")
+  p_objClass <- c("RasterStack", "RasterStack", "RasterStack")
   p_ <- data.table::data.table(
     from = p_from, to = p_to, objName = p_objName, objClass = p_objClass
   )
@@ -158,23 +158,22 @@ test_that("3 levels of parent and child modules load and show correctly", {
   setwd(tmpdir)
 
   on.exit({
-    detach("package:reproducible")
     detach("package:igraph")
     setwd(cwd)
     unlink(tmpdir, recursive = TRUE)
   }, add = TRUE)
 
   suppressMessages({
-    newModule("grandpar1", ".", type = "parent",
+    newModule("grandpar1", tmpdir, type = "parent",
               children = c("child1", "child2", "par1", "par2"), open = FALSE)
-    newModule("par1", ".", type = "parent", children = c("child4", "child3"), open = FALSE)
-    newModule("par2", ".", type = "parent", children = c("child5", "child6"), open = FALSE)
-    newModule("child1", ".", open = FALSE)
-    newModule("child2", ".", open = FALSE)
-    newModule("child3", ".", open = FALSE)
-    newModule("child4", ".", open = FALSE)
-    newModule("child5", ".", open = FALSE)
-    newModule("child6", ".", open = FALSE)
+    newModule("par1", tmpdir, type = "parent", children = c("child4", "child3"), open = FALSE)
+    newModule("par2", tmpdir, type = "parent", children = c("child5", "child6"), open = FALSE)
+    newModule("child1", tmpdir, open = FALSE)
+    newModule("child2", tmpdir, open = FALSE)
+    newModule("child3", tmpdir, open = FALSE)
+    newModule("child4", tmpdir, open = FALSE)
+    newModule("child5", tmpdir, open = FALSE)
+    newModule("child6", tmpdir, open = FALSE)
   })
 
   fileName <- "child2/child2.R"
@@ -197,7 +196,7 @@ test_that("3 levels of parent and child modules load and show correctly", {
   xxx1 <- gsub(xxx, pattern = "timeunit = 'year'", replacement = "timeunit = 'month'")
   cat(xxx1, file = fileName, sep = "\n")
 
-  mySim <- simInit(modules = list("grandpar1"), paths = list(modulePath = "."))
+  mySim <- simInit(modules = list("grandpar1"), paths = list(modulePath = tmpdir))
   mg <- moduleGraph(mySim, FALSE)
   expect_true(is(mg, "list"))
   expect_true(is(mg$graph, "igraph"))

@@ -1,6 +1,6 @@
 #
 #  SpaDES.core/R/SpaDES-core-package.R by Alex M Chubaty and Eliot J B McIntire
-#  Copyright (C) 2015-2017 Her Majesty the Queen in Right of Canada,
+#  Copyright (C) 2015-2018 Her Majesty the Queen in Right of Canada,
 #   as represented by the Minister of Natural Resources Canada
 #
 
@@ -18,8 +18,8 @@
 #' include additional functionality by running user-built simulation modules.
 #' Included are numerous tools to visualize various spatial data formats,
 #' as well as non-spatial data. Much work has been done to speed up the core
-#' of the DES, with current benchmarking as low as 700 microseconds overhead for each
-#' event (including queuing, sorting, spawning event etc.).
+#' of the DES, with current benchmarking as low as 700 microseconds overhead for
+#' each event (including queuing, sorting, spawning event etc.).
 #'
 #' Bug reports: \url{https://github.com/PredictiveEcology/SpaDES.core/issues}
 #'
@@ -125,13 +125,14 @@
 #'   }
 #' }
 #'
-#' \subsection{3.7 Modules and dependencies}{
+#' \subsection{3.7 Modules, dependencies, packages}{
 #'   Accessor functions for the \code{depends}, \code{modules}, and \code{.loadOrder} slots.
 #'   These are included for advanced users.
 #'
 #'   \tabular{ll}{
 #'      \code{\link{depends}} \tab List of simulation module dependencies. (advanced)\cr
 #'      \code{\link{modules}} \tab List of simulation modules to be loaded. (advanced)\cr
+#'      \code{\link{packages}} \tab Vector of required R libraries of all modules. (advanced)\cr
 #'   }
 #' }
 #'
@@ -230,7 +231,7 @@
 #'     \code{\link[SpaDES.tools]{directionFromEachPoint}} \tab Fast calculation of direction and distance surfaces\cr
 #'     \code{\link[SpaDES.tools]{distanceFromEachPoint}} \tab Fast calculation of distance surfaces\cr
 #'     \code{\link[SpaDES.tools]{rings}} \tab Identify rings around focal cells (e.g., buffers and donuts)\cr
-#'     \code{\link[SpaDES.tools]{spokes}} \tab TO DO: need description\cr
+#'     \code{\link[SpaDES.tools]{spokes}} \tab Identify outward radiating spokes from initial points\cr
 #'     \code{\link[SpaDES.tools]{spread}} \tab Contagious cellular automata\cr
 #'     \code{\link[SpaDES.tools]{wrap}} \tab Create a torus from a grid\cr
 #'   }
@@ -308,7 +309,7 @@
 #'     \code{\link[SpaDES.tools]{agentLocation}} \tab Agent location\cr
 #'     \code{\link[SpaDES.tools]{initiateAgents}} \tab Initiate agents into a SpatialPointsDataFrame\cr
 #'     \code{\link[SpaDES.tools]{numAgents}} \tab Number of agents\cr
-#'     \code{\link[SpaDES.tools]{probInit}} \tab Probability of intiating an agent or event\cr
+#'     \code{\link[SpaDES.tools]{probInit}} \tab Probability of initiating an agent or event\cr
 #'     \code{\link[SpaDES.tools]{transitions}} \tab Transition probability\cr
 #'   }
 #' }
@@ -417,9 +418,12 @@
 #'   cache simulation outputs.
 #'   Default is a temporary directory (typically \code{/tmp/RtmpXXX/SpaDES/cache}).
 #'
-#'   \item \code{spades.inputPath}: The default local directory in which to
+#'   \item \code{spades.cachePath}: The default local directory in which to
 #'   look for simulation inputs.
 #'   Default is a temporary directory (typically \code{/tmp/RtmpXXX/SpaDES/inputs}).
+#'
+#'   \item \code{spades.debug}: The default debugging value \code{debug}
+#'   argument in \code{spades()}. Default is \code{TRUE}.
 #'
 #'   \item \code{spades.lowMemory}: If true, some functions will use more memory
 #'     efficient (but slower) algorithms. Default \code{FALSE}.
@@ -438,12 +442,22 @@
 #'   save simulation outputs.
 #'   Default is a temporary directory (typically \code{/tmp/RtmpXXX/SpaDES/outputs}).
 #'
+#'   \item \code{spades.moduleCodeChecks}: Should the various code checks be run
+#'   during \code{simInit}. These are passed to codetools::checkUsage.
+#'   Default is given by the function, plus these :\code{list(suppressParamUnused = FALSE,
+#'   suppressUndefined = TRUE, suppressPartialMatchArgs = FALSE, suppressNoLocalFun = TRUE,
+#'   skipWith = TRUE)}.
+#'
+#'   \item \code{spades.switchPkgNamespaces}: Should the search path be modified
+#'     to ensure a module's required packages are listed first?
+#'     Default \code{TRUE}, which reduces name conflicts among package objects,
+#'     but is not without overhead (\emph{i.e.}, can be slow).
+#'
 #'   \item \code{spades.tolerance}: The default tolerance value used for floating
 #'     point number comparisons. Default \code{.Machine$double.eps^0.5}.
 #'
 #'   \item \code{spades.useragent}: The default user agent to use for downloading
 #'     modules from GitHub.com. Default \code{"http://github.com/PredictiveEcology/SpaDES"}.
-#'
 #' }
 #'
 #' @rdname SpaDES.core-package
@@ -456,5 +470,4 @@
 
 #' @import igraph
 #' @import methods
-#' @import utils
 NULL

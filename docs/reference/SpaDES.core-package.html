@@ -11,8 +11,8 @@
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -34,6 +34,18 @@
 <![endif]-->
 
 
+<!-- Google analytics -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-58633549-6', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
   </head>
 
   <body>
@@ -52,7 +64,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="..//index.html">
+  <a href="../index.html">
     <span class="fa fa-home fa-lg"></span>
      
   </a>
@@ -68,10 +80,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/ii-modules.html">02 Building modules in `SpaDES`</a>
+      <a href="../articles/i-introduction.html">01 Introduction to `SpaDES`</a>
     </li>
     <li>
-      <a href="../articles/i-introduction.html">01 Introduction to `SpaDES`</a>
+      <a href="../articles/ii-modules.html">02 Building modules in `SpaDES`</a>
     </li>
   </ul>
 </li>
@@ -110,8 +122,8 @@ framework that facilitates modularity, and easily enables the user to
 include additional functionality by running user-built simulation modules.
 Included are numerous tools to visualize various spatial data formats,
 as well as non-spatial data. Much work has been done to speed up the core
-of the DES, with current benchmarking as low as 700 microseconds overhead for each
-event (including queuing, sorting, spawning event etc.).</p>
+of the DES, with current benchmarking as low as 700 microseconds overhead for
+each event (including queuing, sorting, spawning event etc.).</p>
 <p>Bug reports: <a href='https://github.com/PredictiveEcology/SpaDES.core/issues'>https://github.com/PredictiveEcology/SpaDES.core/issues</a></p>
 <p>Module repository: <a href='https://github.com/PredictiveEcology/SpaDES-modules'>https://github.com/PredictiveEcology/SpaDES-modules</a></p>
 <p>Wiki: <a href='https://github.com/PredictiveEcology/SpaDES/wiki'>https://github.com/PredictiveEcology/SpaDES/wiki</a></p>
@@ -217,10 +229,10 @@ of a <code><a href='simList-class.html'>simList</a></code> object are summarized
      <code>time</code> </td>
 <td> Current simulation time, in units of longest module.</td>
 </tr><tr><td>
-     <code><a href='simList-accessors-times.html'>start</a></code> </td>
+     <code>start</code> </td>
 <td> Simulation start time, in units of longest module.</td>
 </tr><tr><td>
-     <code><a href='simList-accessors-times.html'>end</a></code> </td>
+     <code>end</code> </td>
 <td> Simulation end time, in units of longest module.</td>
 </tr><tr><td>
      <code><a href='simList-accessors-times.html'>times</a></code> </td>
@@ -240,7 +252,7 @@ of a <code><a href='simList-class.html'>simList</a></code> object are summarized
      <code><a href='simList-accessors-events.html'>completed</a></code> </td>
 <td> Completed simulation events. (advanced)</td>
 </tr></table>
-    <h3>3.7 Modules and dependencies</h3>
+    <h3>3.7 Modules, dependencies, packages</h3>
     Accessor functions for the <code>depends</code>, <code>modules</code>, and <code>.loadOrder</code> slots.
   These are included for advanced users.
     <table><tr><td>
@@ -249,6 +261,9 @@ of a <code><a href='simList-class.html'>simList</a></code> object are summarized
 </tr><tr><td>
      <code><a href='simList-accessors-modules.html'>modules</a></code> </td>
 <td> List of simulation modules to be loaded. (advanced)</td>
+</tr><tr><td>
+     <code><a href='packages.html'>packages</a></code> </td>
+<td> Vector of required R libraries of all modules. (advanced)</td>
 </tr></table>
     <h3>3.8 <code>simList</code> environment</h3>
     The <code><a href='simList-class.html'>simList</a></code> has a slot called <code>.envir</code> which is an environment.
@@ -366,46 +381,46 @@ the suggested <code>SpaDES.tools</code> package, and are summarized below.</em><
   Contagion can be modelled using discrete approaches or continuous approaches.
   Several <code>SpaDES.tools</code> functions assist with these:
     <table><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/adj'>adj</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/adj.html'>adj</a></code> </td>
 <td> An optimized (i.e., faster) version of <code><a href='http://www.rdocumentation.org/packages/raster/topics/adjacent'>adjacent</a></code></td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/cir'>cir</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/cir.html'>cir</a></code> </td>
 <td> Identify pixels in a circle around a <code><a href='http://www.rdocumentation.org/packages/sp/topics/SpatialPoints-class'>SpatialPoints*</a></code> object</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/directions'>directionFromEachPoint</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/directions.html'>directionFromEachPoint</a></code> </td>
 <td> Fast calculation of direction and distance surfaces</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/distances'>distanceFromEachPoint</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/distances.html'>distanceFromEachPoint</a></code> </td>
 <td> Fast calculation of distance surfaces</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/rings'>rings</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/rings.html'>rings</a></code> </td>
 <td> Identify rings around focal cells (e.g., buffers and donuts)</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/spokes'>spokes</a></code> </td>
-<td> TO DO: need description</td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/spokes.html'>spokes</a></code> </td>
+<td> Identify outward radiating spokes from initial points</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/spread'>spread</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/spread.html'>spread</a></code> </td>
 <td> Contagious cellular automata</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/wrap'>wrap</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/wrap.html'>wrap</a></code> </td>
 <td> Create a torus from a grid</td>
 </tr></table>
     <h3>5.2 Spatial agent methods</h3>
     Agents have several methods and functions specific to them:
     <table><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/crw'>crw</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/crw.html'>crw</a></code> </td>
 <td> Simple correlated random walk function</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/heading'>heading</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/heading.html'>heading</a></code> </td>
 <td> Determines the heading between SpatialPoints*</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/quickPlot/topics/makeLines'>makeLines</a></code> </td>
+    <code><a href='http://quickplot.predictiveecology.org//reference/makeLines.html'>makeLines</a></code> </td>
 <td> Makes <code>SpatialLines</code> object for, e.g., drawing arrows</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/crw'>move</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/crw.html'>move</a></code> </td>
 <td> A meta function that can currently only take "crw"</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/specnumperpatch-probs'>specificNumPerPatch</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/specnumperpatch-probs.html'>specificNumPerPatch</a></code> </td>
 <td> Initiate a specific number of agents per patch</td>
 </tr></table>
     <h3>5.3 GIS operations</h3>
@@ -421,14 +436,14 @@ the suggested <code>SpaDES.tools</code> package, and are summarized below.</em><
   This allows compact representation of, e.g., rasters that have many individual pixels
   that share identical information.
     <table><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/rasterizeReduce'>rasterizeReduced</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/rasterizeReduce.html'>rasterizeReduced</a></code> </td>
 <td> Convert reduced representation to full raster.</td>
 </tr></table>
     <h3>5.5 Colors in <code>Raster*</code> objects</h3>
     We likely will not want the default colours for every map.
   Here are several helper functions to add to, set and get colors of <code>Raster*</code> objects:
     <table><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/quickPlot/topics/getSetColors'>setColors</a></code> </td>
+    <code><a href='http://quickplot.predictiveecology.org//reference/getSetColors.html'>setColors</a></code> </td>
 <td> Set colours for plotting <code>Raster*</code> objects</td>
 </tr><tr><td>
     <code>getColors</code> </td>
@@ -441,10 +456,10 @@ the suggested <code>SpaDES.tools</code> package, and are summarized below.</em><
     It is often useful to build dummy maps with which to build simulation models before all data are available.
   These dummy maps can later be replaced with actual data maps.
     <table><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/gaussmap'>gaussMap</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/gaussmap.html'>gaussMap</a></code> </td>
 <td> Creates a random map using Gaussian random fields</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/randomPolygons'>randomPolygons</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/randomPolygons.html'>randomPolygons</a></code> </td>
 <td> Creates a random polygon with specified number of classes</td>
 </tr></table>
     <h3>5.7 Checking for the existence of objects</h3>
@@ -454,7 +469,7 @@ the suggested <code>SpaDES.tools</code> package, and are summarized below.</em><
     <code><a href='checkObject.html'>checkObject</a></code> </td>
 <td> Check for a existence of an object within a <code>simList</code> </td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/checkPath'>checkPath</a></code> </td>
+    <code><a href='http://reproducible.predictiveecology.org/reference/checkPath.html'>checkPath</a></code> </td>
 <td> Checks the specified filepath for formatting consistencies</td>
 </tr></table>
     <h3>5.8 SELES-type approach to simulation</h3>
@@ -462,25 +477,25 @@ the suggested <code>SpaDES.tools</code> package, and are summarized below.</em><
   They are intended to make translations from <a href='http://www.gowlland.ca/'>SELES</a>.
   You must know how to use SELES for these to be useful:
     <table><tr><td>1
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/SELESagentLocation'>agentLocation</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/SELESagentLocation.html'>agentLocation</a></code> </td>
 <td> Agent location</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/initiateAgents'>initiateAgents</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/initiateAgents.html'>initiateAgents</a></code> </td>
 <td> Initiate agents into a SpatialPointsDataFrame</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/SELESnumAgents'>numAgents</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/SELESnumAgents.html'>numAgents</a></code> </td>
 <td> Number of agents</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/SELESprobInit'>probInit</a></code> </td>
-<td> Probability of intiating an agent or event</td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/SELESprobInit.html'>probInit</a></code> </td>
+<td> Probability of initiating an agent or event</td>
 </tr><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/SELEStransitions'>transitions</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/SELEStransitions.html'>transitions</a></code> </td>
 <td> Transition probability</td>
 </tr></table>
     <h3>5.9 Miscellaneous</h3>
     Functions that may be useful within a <code>SpaDES</code> context:
     <table><tr><td>
-    <code><a href='http://www.rdocumentation.org/packages/SpaDES.tools/topics/inRange'>inRange</a></code> </td>
+    <code><a href='http://spades-tools.predictiveecology.org/reference/inRange.html'>inRange</a></code> </td>
 <td> Test whether a number lies within range [a,b]</td>
 </tr><tr><td>
     <code>layerNames</code> </td>
@@ -510,22 +525,22 @@ This might be useful if a simulation is very long, has been run once, and the
 goal is just to retrieve final results.
 This would be an alternative to manually saving the outputs.</p>
 <p>See example in <code><a href='spades.html'>spades</a></code>, achieved by using <code>cache = TRUE</code> argument.</p><table><tr><td>
-  <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/cache'>Cache</a></code> </td>
+  <code><a href='http://reproducible.predictiveecology.org/reference/cache.html'>Cache</a></code> </td>
 <td> Caches a function, but often accessed as arg in <code><a href='spades.html'>spades</a></code></td>
 </tr><tr><td>
-  <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/reproducible-deprecated'>cache</a></code> </td>
+  <code><a href='http://reproducible.predictiveecology.org/reference/reproducible-deprecated.html'>cache</a></code> </td>
 <td> deprecated. Please use <code>Cache</code></td>
 </tr><tr><td>
-  <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/viewCache'>showCache</a></code> </td>
+  <code><a href='http://reproducible.predictiveecology.org/reference/viewCache.html'>showCache</a></code> </td>
 <td> Shows information about the objects in the cache</td>
 </tr><tr><td>
-  <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/viewCache'>clearCache</a></code> </td>
+  <code><a href='http://reproducible.predictiveecology.org/reference/viewCache.html'>clearCache</a></code> </td>
 <td> Removes objects from the cache</td>
 </tr><tr><td>
-  <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/viewCache'>keepCache</a></code> </td>
+  <code><a href='http://reproducible.predictiveecology.org/reference/viewCache.html'>keepCache</a></code> </td>
 <td> Keeps only the objects described</td>
 </tr><tr><td>
-  <code><a href='http://www.rdocumentation.org/packages/reproducible/topics/clearStubArtifacts'>clearStubArtifacts</a></code> </td>
+  <code><a href='http://reproducible.predictiveecology.org/reference/clearStubArtifacts.html'>clearStubArtifacts</a></code> </td>
 <td> Removes any erroneous items in a cache repository</td>
 </tr></table>
     <p>A module developer can build caching into their module by creating cached versions of their
@@ -616,9 +631,11 @@ These can be found with <code>file.path(find.package("SpaDES.core"), "sampleModu
 <li><p><code>spades.cachePath</code>: The default local directory in which to
   cache simulation outputs.
   Default is a temporary directory (typically <code>/tmp/RtmpXXX/SpaDES/cache</code>).</p></li>
-<li><p><code>spades.inputPath</code>: The default local directory in which to
+<li><p><code>spades.cachePath</code>: The default local directory in which to
   look for simulation inputs.
   Default is a temporary directory (typically <code>/tmp/RtmpXXX/SpaDES/inputs</code>).</p></li>
+<li><p><code>spades.debug</code>: The default debugging value for <code><a href='spades.html'>spades()</a></code>.
+  Default is <code>FALSE</code>.</p></li>
 <li><p><code>spades.lowMemory</code>: If true, some functions will use more memory
     efficient (but slower) algorithms. Default <code>FALSE</code>.</p></li>
 <li><p><code>spades.modulePath</code>: The default local directory where modules
@@ -631,6 +648,10 @@ These can be found with <code>file.path(find.package("SpaDES.core"), "sampleModu
 <li><p><code>spades.outputPath</code>: The default local directory in which to
   save simulation outputs.
   Default is a temporary directory (typically <code>/tmp/RtmpXXX/SpaDES/outputs</code>).</p></li>
+<li><p><code>spades.switchPkgNamespaces</code>: Should the search path be modified
+    to ensure a module's required packages are listed first?
+    Default <code>TRUE</code>, which reduces name conflicts among package objects,
+    but is not without overhead (<em>i.e.</em>, can be slow).</p></li>
 <li><p><code>spades.tolerance</code>: The default tolerance value used for floating
     point number comparisons. Default <code>.Machine$double.eps^0.5</code>.</p></li>
 <li><p><code>spades.useragent</code>: The default user agent to use for downloading
@@ -640,7 +661,7 @@ These can be found with <code>file.path(find.package("SpaDES.core"), "sampleModu
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <p>Useful links:</p><ul>
-<li><p><a href='http://spades.predictiveecology.org'>http://spades.predictiveecology.org</a></p></li>
+<li><p><a href='http://spades-core.predictiveecology.org/'>http://spades-core.predictiveecology.org/</a></p></li>
 <li><p><a href='https://github.com/PredictiveEcology/SpaDES.core'>https://github.com/PredictiveEcology/SpaDES.core</a></p></li>
 <li><p>Report bugs at <a href='https://github.com/PredictiveEcology/SpaDES.core/issues'>https://github.com/PredictiveEcology/SpaDES.core/issues</a></p></li>
 </ul>
@@ -700,7 +721,7 @@ Other contributors:
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

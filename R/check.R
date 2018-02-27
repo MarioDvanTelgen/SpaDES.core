@@ -24,7 +24,6 @@
 #' @importFrom quickPlot .objectNames
 #' @include simList-class.R
 #' @export
-#' @docType methods
 #' @rdname checkObject
 #'
 #' @author Alex Chubaty and Eliot McIntire
@@ -137,7 +136,6 @@ setMethod(
 #'
 #' @include simList-class.R
 #' @export
-#' @docType methods
 #' @rdname checkParams
 #'
 #' @author Alex Chubaty
@@ -162,32 +160,45 @@ setMethod(
     if (length(userModules)) {
       ### check whether each param in simInit occurs in a module's .R file
       globalsFound <- list()
+      readFile <- list()
       for (uM in userModules) {
+        filename <- paste(path, "/", uM, "/", uM, ".R", sep = "")
+        readFile[[uM]] <- if (!is.null(sim@.envir[[".parsedFiles"]][[filename]])) {
+          # a little faster to use already parsed objects --
+          #   might have happened earlier during simInit,
+          #   if this checkParams was run from simInit
+          tmp <- parseConditional(envir = sim@.envir[[".parsedFiles"]],
+                                  filename = filename)
+          deparse(tmp$parsedFile)
+        } else {
+          readLines(paste(path, "/", uM, "/", uM, ".R",
+                                            sep = ""))
+        }
+
+
         # check global params
-        if (length(globalParams) > 0) {
-          for (i in 1:length(globalParams)) {
+        #if (length(globalParams) > 0) {
+          for (i in seq(globalParams)) {
             gP <- names(globalParams[i])
-            result <- grep(gP, readLines(paste(path, "/", uM, "/", uM, ".R",
-                                               sep = "")), value = FALSE)
+            result <- grep(gP, readFile[[uM]], value = FALSE)
             if (length(result) > 0) {
               globalsFound <- append(globalsFound, gP)
             }
           }
-        }
+        #}
 
         # check user params
         userParams <- params[[uM]][-which(names(params[[uM]]) %in% coreParams)]
-        if (length(userParams) > 0) {
-          for (i in 1:length(userParams)) {
+        #if (length(userParams) > 0) {
+          for (i in seq(userParams)) {
             uP <- names(userParams[i])
-            result <- grep(uP, readLines(paste(path, "/", uM, "/", uM, ".R",
-                                               sep = "")), value = FALSE)
+            result <- grep(uP, readFile[[uM]], value = FALSE)
             if (length(result) <= 0) {
               allFound <- FALSE
               message(paste("Parameter", uP, "is not used in module", uM))
             }
           }
-        }
+        #}
       }
 
       globalsFound <- unique(globalsFound)
@@ -202,11 +213,9 @@ setMethod(
       globalsFound <- list()
       for (uM in userModules) {
         # read in and cleanup/isolate the global params in the module's .R file
-        moduleParams <- grep("globals\\(sim\\)\\$",
-                             readLines(paste(path, "/", uM, "/", uM, ".R", sep = "")),
-                             value = TRUE) %>%
+        moduleParams <- grep("globals\\(sim\\)\\$", readFile[[uM]], value = TRUE) %>%
           strsplit(., " ") %>%
-          unlist(lapply(., function(x) x[nzchar(x, keepNA=TRUE)] )) %>%
+          unlist(lapply(., function(x) x[nzchar(x, keepNA = TRUE)])) %>%
           grep("globals\\(sim\\)\\$", ., value = TRUE) %>%
           gsub(",", "", .) %>%
           gsub("\\)\\)", "", .) %>%
@@ -229,9 +238,7 @@ setMethod(
         }
 
         # read in and cleanup/isolate the user params in the module's .R file
-        moduleParams <- grep(paste0("params\\(sim\\)\\$", uM, "\\$"),
-                             readLines(paste(path, "/", uM, "/", uM, ".R",
-                                             sep = "")),
+        moduleParams <- grep(paste0("params\\(sim\\)\\$", uM, "\\$"), readFile[[uM]],
                              value = TRUE) %>%
           gsub(paste0("^.*params\\(sim\\)\\$", uM, "\\$"), "", .) %>%
           gsub("[!\"#$%&\'()*+,/:;<=>?@[\\^`{|}~-].*$", "", .) %>%

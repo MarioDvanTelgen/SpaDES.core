@@ -1,5 +1,5 @@
 SpaDES.core.version <- "0.1.0"
-if (packageVersion("SpaDES.core") < SpaDES.core.version) {
+if (utils::packageVersion("SpaDES.core") < SpaDES.core.version) {
   stop("This 'randomLandscapes' module was built with 'SpaDES.core' version",
        SpaDES.core.version, ".\n",
        "Please update 'SpaDES.core' to use this module.")
@@ -28,7 +28,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list(),
   documentation = list(),
-  reqdPkgs = list("raster", "RColorBrewer", "tkrplot", "RandomFields", "SpaDES.tools"),
+  reqdPkgs = list("raster", "RColorBrewer", "SpaDES.tools"),
   parameters = rbind(
     defineParameter("inRAM", "logical", FALSE, TRUE, FALSE, "should the raster be stored in memory?"),
     defineParameter("nx", "numeric", 100L, 10L, 500L, "size of map (number of pixels) in the x dimension"),
@@ -57,7 +57,7 @@ doEvent.randomLandscapes <- function(sim, eventTime, eventType, debug = FALSE) {
     eventType,
     init = {
       # do stuff for this event
-      sim <- sim$randomLandscapesInit(sim)
+      sim <- Init(sim)
 
       # schedule the next events
       sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "randomLandscapes", "plot", .last())
@@ -83,7 +83,7 @@ doEvent.randomLandscapes <- function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 ## event functions
-randomLandscapesInit <- function(sim) {
+Init <- function(sim) {
   if (is.null(P(sim)$inRAM)) {
     inMemory <- FALSE
   } else {
@@ -96,13 +96,13 @@ randomLandscapesInit <- function(sim) {
                      ymn = -ny / 2, ymx = ny / 2)
   speedup <- max(1, nx / 5e2)
 
-  # Make dummy maps for testing of models
-  DEM <- gaussMap(template, scale = 300, var = 0.03, speedup = speedup, inMemory = inMemory)
-  DEM[] <- round(getValues(DEM), 1) * 1000
-  forestAge <- gaussMap(template, scale = 10, var = 0.1, speedup = speedup, inMemory = inMemory)
-  forestAge[] <- round(getValues(forestAge), 1) * 20
-  percentPine <- gaussMap(template, scale = 50, var = 1, speedup = speedup, inMemory = inMemory)
-  percentPine[] <- round(getValues(percentPine), 1)
+    # Make dummy maps for testing of models
+    DEM <- gaussMap(template, scale = 300, var = 0.03, speedup = speedup, inMemory = inMemory)
+    DEM[] <- round(getValues(DEM), 1) * 1000
+    forestAge <- gaussMap(template, scale = 10, var = 0.1, speedup = speedup, inMemory = inMemory)
+    forestAge[] <- round(getValues(forestAge), 1) * 20
+    percentPine <- gaussMap(template, scale = 50, var = 1, speedup = speedup, inMemory = inMemory)
+    percentPine[] <- round(getValues(percentPine), 1)
 
   # Scale them as needed
   forestAge <- forestAge / maxValue(forestAge) * 100

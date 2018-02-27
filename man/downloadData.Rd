@@ -9,15 +9,20 @@
 \alias{downloadData,character,character,missing-method}
 \title{Download module data}
 \usage{
-downloadData(module, path, quiet)
+downloadData(module, path, quiet, quickCheck = FALSE, overwrite = FALSE,
+  files = NULL, checked = NULL)
 
-\S4method{downloadData}{character,character,logical}(module, path, quiet)
+\S4method{downloadData}{character,character,logical}(module, path, quiet,
+  quickCheck = FALSE, overwrite = FALSE, files = NULL, checked = NULL)
 
-\S4method{downloadData}{character,missing,missing}(module)
+\S4method{downloadData}{character,missing,missing}(module, quickCheck,
+  overwrite, files, checked)
 
-\S4method{downloadData}{character,missing,logical}(module, quiet)
+\S4method{downloadData}{character,missing,logical}(module, quiet, quickCheck,
+  overwrite, files, checked)
 
-\S4method{downloadData}{character,character,missing}(module, path)
+\S4method{downloadData}{character,character,missing}(module, path, quickCheck,
+  overwrite, files, checked)
 }
 \arguments{
 \item{module}{Character string giving the name of the module.}
@@ -25,14 +30,37 @@ downloadData(module, path, quiet)
 \item{path}{Character string giving the path to the module directory.}
 
 \item{quiet}{Logical. This is passed to \code{download.file}. Default is FALSE.}
+
+\item{quickCheck}{Logical. If \code{TRUE}, then the check with local data will only
+use \code{file.size} instead of \code{digest::digest}.
+This is faster, but potentially much less robust.}
+
+\item{overwrite}{Logical. Should local data files be overwritten in case they exist?
+Default is FALSE}
+
+\item{files}{A character vector of length 1 or more if only a subset of files should be
+checked in the CHECKSUMS.txt file}
+
+\item{checked}{The result of a previous checksums(...) call. This should only be used when
+there is no possibility that the file has changed, i.e., if \code{downloadData} is
+called from inside another function}
 }
 \value{
 Invisibly, a list of downloaded files.
 }
 \description{
 Download external data for a module if not already present in the module
-directory or if there is a checksum mismatch indicating that the file is not
+directory, or if there is a checksum mismatch indicating that the file is not
 the correct one.
+}
+\details{
+\code{downloadData} requires a checksums file to work, as it will only download
+ the files specified therein. Hence, module developers should make sure they
+ have manually downloaded all the necessary data and ran \code{checksums} to
+ build a checksums file.
+}
+\seealso{
+\code{\link{checksums}} for building a checksums file.
 }
 \author{
 Alex Chubaty

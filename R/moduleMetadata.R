@@ -11,14 +11,11 @@
 #' @return A list of module metadata, matching the structure in
 #'         \code{\link{defineModule}}.
 #'
-#' @docType methods
+#' @author Alex Chubaty
 #' @export
 #' @include simulation-simInit.R
 #' @rdname moduleMetadata
-#'
 #' @seealso \code{\link{defineModule}}
-#'
-#' @author Alex Chubaty
 #'
 #' @example inst/examples/example_moduleMetadata.R
 #'
@@ -48,7 +45,7 @@ setMethod(
            function(xx) {
              pmp <- .parseModulePartial(filename = file.path(path, module, paste0(module, ".R")),
                                         defineModuleElement = xx)
-             out2 <- try(eval(pmp), silent = TRUE)
+             out2 <- suppressMessages(try(eval(pmp), silent = TRUE))
              if (is(out2, "try-error")) {
                inner2 <- lapply(pmp, function(yyy) {
                  # pmp is whole rbind statement
@@ -66,7 +63,8 @@ setMethod(
                })
                out2 <- as.call(inner2)
              }
-             return(eval(out2))
+             aa <- capture.output(type = "message", bb <- eval(out2))
+             return(bb)
           })
 
     names(metadata) <- defineModuleListItems
@@ -112,21 +110,19 @@ setMethod(
 #'               Default is to use the \code{spades.modulePath} option.
 #'
 #' @inheritParams spades
+#' @inheritParams .parseModulePartial
 #'
 #' @return \code{numeric_version} indicating the module's version.
 #'
-#' @docType methods
+#' @author Alex Chubaty
 #' @export
 #' @include simulation-simInit.R
 #' @rdname moduleVersion
-#'
 #' @seealso \code{\link{moduleMetadata}}
-#'
-#' @author Alex Chubaty
 #'
 #' @example inst/examples/example_moduleVersion.R
 #'
-setGeneric("moduleVersion", function(module, path, sim) {
+setGeneric("moduleVersion", function(module, path, sim, envir = NULL) {
   standardGeneric("moduleVersion")
 })
 
@@ -134,14 +130,14 @@ setGeneric("moduleVersion", function(module, path, sim) {
 #' @rdname moduleVersion
 setMethod(
   "moduleVersion",
-  signature = c(module = "character", path = "character", sim = "missing"),
-  definition = function(module, path) {
-  v <- .parseModulePartial(filename = file.path(path, module, paste0(module, ".R")),
-                           defineModuleElement = "version")
-  if (is.null(names(v))) {
-    as.numeric_version(v) ## SpaDES < 1.3.1.9044
-  } else {
-    as.numeric_version(v[[module]]) ## SpaDES >= 1.3.1.9044
+  signature = c(module = "character", path = "character", sim = "missing", envir = "ANY"),
+  definition = function(module, path, envir) {
+    v <- .parseModulePartial(filename = file.path(path, module, paste0(module, ".R")),
+                             defineModuleElement = "version", envir = envir)
+    if (is.null(names(v))) {
+      as.numeric_version(v) ## SpaDES < 1.3.1.9044
+    } else {
+      as.numeric_version(v[[module]]) ## SpaDES >= 1.3.1.9044
   }
 })
 
@@ -149,18 +145,20 @@ setMethod(
 #' @rdname moduleVersion
 setMethod(
   "moduleVersion",
-  signature = c(module = "character", path = "missing", sim = "missing"),
-  definition = function(module) {
-    moduleVersion(module = module, path = getOption("spades.modulePath"))
+  signature = c(module = "character", path = "missing", sim = "missing", envir = "ANY"),
+  definition = function(module, envir) {
+    moduleVersion(module = module, path = getOption("spades.modulePath"),
+                  envir = envir)
 })
 
 #' @export
 #' @rdname moduleVersion
 setMethod(
   "moduleVersion",
-  signature = c(module = "character", path = "missing", sim = "simList"),
-  definition = function(module, sim) {
-    v <- .parseModulePartial(sim = sim, modules = list(module), defineModuleElement = "version") %>%
+  signature = c(module = "character", path = "missing", sim = "simList", envir = "ANY"),
+  definition = function(module, sim, envir) {
+    v <- .parseModulePartial(sim = sim, modules = list(module),
+                             defineModuleElement = "version", envir = envir) %>%
       `[[`(module)
 
     if (is.null(names(v))) {

@@ -18,7 +18,7 @@ doEvent.save <- function(sim, eventTime, eventType, debug = FALSE) {
   } else if (eventType == "later") {
     sim <- saveFiles(sim)
   } else if (eventType == "end") {
-    message(paste0("Files saved. Use outputs(your simList) for details"))
+    message(crayon::green(paste0("Files saved. Use outputs(your simList) for details")), sep = "")
   }
 
   return(invisible(sim))
@@ -79,7 +79,6 @@ doEvent.save <- function(sim, eventTime, eventType, debug = FALSE) {
 #' @importFrom dplyr bind_rows
 #' @importFrom data.table data.table
 #' @export
-#' @docType methods
 #' @rdname saveFiles
 #'
 #' @examples
@@ -215,11 +214,11 @@ saveFiles <- function(sim) {
 #'
 #' @param keepFileBackedAsIs Logical. If there are file-backed \code{Raster}
 #'        objects, should they be kept in their file-backed format,
-#'        or loaded into RAM and saved within the \code{.Rdata} file.
+#'        or loaded into RAM and saved within the \code{.RData} file.
 #'        If \code{TRUE} (default), then the files will be copied to
 #'        \code{file.path(dirname(filename), "rasters")}.
 #'
-#' @return A saved .Rdata file in \code{filename} location.
+#' @return A saved \code{.RData} file in \code{filename} location.
 #'
 #' @export
 #' @rdname loadFiles

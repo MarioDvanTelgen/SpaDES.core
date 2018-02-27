@@ -240,7 +240,7 @@ if (interactive()) {
   #   numerics here -- e.g., list(0.2, 0.23) for spreadprob in fireSpread module,
   #   but they can be anything, as long as it is a list.
   experimentParams <- list(fireSpread = list(spreadprob = list(0.2, 0.23),
-                                             nFires = list(20, 10)),
+                                             nfires = list(20, 10)),
                            caribouMovement = list(N = list(100, 1000)))
 
   sims <- experiment(mySim, params = experimentParams)
@@ -249,9 +249,9 @@ if (interactive()) {
   attr(sims, "experiment")
 
   # Read in outputs from sims object
-  FireMaps <- do.call(stack, lapply(1:NROW(attr(sims, "experiment")$expDesign),
-                                    function(x) sims[[x]]$landscape$Fires))
-  if (interactive()) Plot(FireMaps, new = TRUE)
+  fireMaps <- do.call(stack, lapply(1:NROW(attr(sims, "experiment")$expDesign),
+                                    function(x) sims[[x]]$landscape$fires))
+  if (interactive()) Plot(fireMaps, new = TRUE)
 
   # Or reload objects from files, useful if sim objects too large to store in RAM
   caribouMaps <- lapply(sims, function(sim) {
@@ -328,7 +328,7 @@ if (interactive()) {
   # Run it twice to get two copies of the randomly generated landscape
   mySimRLOut <- experiment(mySimRL, replicate = 2)
 
-  #extract one of the random landscapes, which will be passed into next as an object
+  # extract one of the random landscapes, which will be passed into next as an object
   landscape <- mySimRLOut[[1]]$landscape
 
   # here we don't run the randomLandscapes module; instead we pass in a landscape
@@ -358,12 +358,12 @@ if (interactive()) {
   landscapeFiles <- dir(outputPath(mySimNoRL), recursive = TRUE, pattern = "landscape",
                         full.names = TRUE)
 
-  # Can read in Fires layers from disk since they were saved, or from the sims
+  # Can read in fires layers from disk since they were saved, or from the sims
   #  object
-  # Fires <- lapply(sims, function(x) x$landscape$Fires) \%>\% stack
-  Fires <- lapply(landscapeFiles, function(x) readRDS(x)$Fires) \%>\% stack()
-  Fires[Fires > 0] <- 1 # convert to 1s and 0s
-  fireProb <- sum(Fires) / nlayers(Fires) # sum them and convert to probability
+  # fires <- lapply(sims, function(x) x$landscape$fires) \%>\% stack
+  fires <- lapply(landscapeFiles, function(x) readRDS(x)$fires) \%>\% stack()
+  fires[fires > 0] <- 1 # convert to 1s and 0s
+  fireProb <- sum(fires) / nlayers(fires) # sum them and convert to probability
   if (interactive()) Plot(fireProb, new = TRUE)
 
   # Example 9 - Pass in inputs, i.e., input data objects taken from disk
