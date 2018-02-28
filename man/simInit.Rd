@@ -86,6 +86,12 @@ then the \code{.inputObjects} will be cached.
 Setting \code{notOlderThan = Sys.time()} will cause the
 cached versions of \code{.inputObjects} to be refreshed,
 i.e., rerun.}
+
+\item{studyArea}{An optional \code{Raster}, \code{SpatialPolygon*}, \code{Extent}
+or a filename (as character string) to load one of these. This
+will be loaded into the \code{simList} and assigned to
+\code{.studyArea}, i.e, can be accessed with e.g.,
+\code{sim@.studyArea}.}
 }
 \value{
 A \code{simList} simulation object, pre-initialized from values
