@@ -26,6 +26,7 @@ clashingFnsSimple <- gsub(pattern = "\\\\>", clashingFnsSimple, replacement = ""
 
 
 allCleanMessage <- "module code appears clean"
+cantCodeCheckMessage <- ": line could not be checked "
 #' Find all references to sim$
 #'
 #' @param envToFindSim An environment where sim is defined. This is used when
@@ -59,26 +60,46 @@ allCleanMessage <- "module code appears clean"
                                type) {
   out <- unlist(unique(lapply(names(moduleEnv), function(x) {
     if (is.function(moduleEnv[[x]])) {
-      #browser(expr = "Init" %in% x)
-      xAsString <- deparse(moduleEnv[[x]], backtick = TRUE, control = "all")
-      parsedXAsString <- tryCatch(parse(text = xAsString), error = function(yy) NULL)
-      if (is.null(parsedXAsString)>0) {
-        y = "could not be code checked, perhaps because of complex backticks"
-      } else {
-        #browser(expr="Init" %in% x)
-        xAsCall <- as.call(parsedXAsString)
 
-        if (identical(type, "returnSim")) {
-          if (grepl(x, pattern = mustBeReturnSim)) {
-            # only pull out last line
-            # must end with sim or return(sim) or return(invisible(sim))
-            xAsString <- xAsString[length(xAsString)-1]
-            xAsCall <- as.call(parse(text = xAsString))
-          } else {
-            xAsCall <- ""
-          }
-        }
+      xAsString <- deparse(body(moduleEnv[[x]]))#, backtick = TRUE, control = "all")
+
+      if (identical(type, "returnSim")) { # returnSim case doesn't need to parse whole function, only last Number
+        xAsCall <- .isLastLineSim(x = x, xAsString = xAsString)
         y <- .findElement(xAsCall, type = type)
+      } else {
+
+        parsedXAsString <- tryCatch(parse(text = xAsString), error = function(yy) NULL)
+
+        # In some cases, e.g., Jean Marchal's
+        if (is.null(parsedXAsString)>0) {
+
+          deparseBody <- deparse(body(moduleEnv[[x]]))
+          bb <- deparseBody[-c(1, length(deparseBody))]
+          funStarts <- grep("^    [[:alpha:]]", bb)
+          bb[funStarts] <- gsub("^    ", "", bb[funStarts])
+          funEnds <- funStarts - 1
+
+          y <- lapply(seq(funStarts)[-length(funStarts)], function(yy) {
+            parsedXAsString <- tryCatch(parse(text = bb[seq(funStarts[yy], funEnds[yy + 1])]), error = function(yy) NULL)
+            if (!is.null(parsedXAsString)) {
+              xAsCall <- as.call(parsedXAsString)
+              if (identical(type, "returnSim")) {
+                xAsCall <- .isLastLineSim(x = x, xAsString = bb[seq(funStarts[yy], funEnds[yy + 1])])
+              }
+              y <- .findElement(xAsCall, type = type)
+            } else {
+              #y = strsplit(bb[funStarts[yy]], split = "\\s+")[[1]][1]
+              y <- paste0(cantCodeCheckMessage, "'",bb[funStarts[yy]], "'")
+            }
+          })
+        } else {
+          xAsCall <- as.call(parsedXAsString)
+
+          if (identical(type, "returnSim")) {
+            xAsCall <- .isLastLineSim(x = x, xAsString = xAsString)
+          }
+          y <- .findElement(xAsCall, type = type)
+        }
       }
       if (length(y)) {
         y <- na.omit(y)
@@ -261,13 +282,19 @@ allCleanMessage <- "module code appears clean"
 
   # Can't code check:
   allChecks <- list(simAssigns = simAssigns, simGets = simGets, returnsSim = returnsSim, assignToSim = assignToSim, fg = fg)
-  cantCodeCheck <- lapply(allChecks, function(xx) grepl("could not be code checked", xx))
+  cantCodeCheck <- lapply(allChecks, function(xx) grepl(cantCodeCheckMessage, xx))
   anyCantCodeCheck <- unlist(lapply(cantCodeCheck, any))
   if (any(anyCantCodeCheck)) {
     cant <- lapply(names(cantCodeCheck[anyCantCodeCheck]), function(objName) {
       localObj <- allChecks[[objName]]
       localObj[cantCodeCheck[[objName]]]
     })
+
+    textCantCheck <- gsub(paste0(cantCodeCheckMessage, "'"), "", cant[[1]])
+    textCantCheck <- gsub("'$", "", textCantCheck)
+
+    lineNumbers <- .lineNumbersInSrcFile(sim, m, textCantCheck)
+
     dfCant <- data.frame(names = names(unlist(cant)), cant = unlist(cant), stringsAsFactors = FALSE)
     dfCant <- unique(dfCant)
     cant <- dfCant$cant
@@ -275,10 +302,17 @@ allCleanMessage <- "module code appears clean"
 
     if (length(cant)) {
       verb <- .verb(cant)
-      hadPrevMessage <- .parseMessage(m, "module code",
-                                      paste0(paste(names(cant), collapse = ", "),
-                                             " ", cant
-                                      ))
+      hadPrevMessage <- lapply(seq(cant), function(cantNamesIndex) {
+        cantUnique <- cant[names(cant) == cant[cantNamesIndex]]
+        .parseMessage(m, "module code",
+                      paste(paste0(names(cant)[cantNamesIndex], " ",
+                                   cant[cantNamesIndex],
+                                   if (length(lineNumbers[[cantNamesIndex]]))
+                                     paste0(" (possibly at ", lineNumbers[[cantNamesIndex]]), ")"),
+                            collapse = "\n")
+                      )
+      })
+
 
     }
 
@@ -544,16 +578,28 @@ allCleanMessage <- "module code appears clean"
 #' @inheritParams .findElements
 #' @rdname findElements
 .parsingSim <- function(x, type) {
-  if (as.character(x)[1] %in% c("$") &&
-      grepl(deparse(x[[2]]), "sim|sim@.envir") && is.name(x[[3]])) {
-    out <- as.character(x[[3]])
-  } else if (as.character(x)[1] %in% "[[" &&
-             grepl(deparse(x[[2]]), "sim|sim@.envir") && is.character(x[[3]])) {
-    out <- x[[3]]
-  } else if (as.character(x)[1] %in% "[[" &&
-             grepl(deparse(x[[2]]), "sim|sim@.envir") && is.call(x[[3]])) {
-    out <- deparse(x[[3]])
-  } else {
+  if (length(x) > 1) {
+    if (!is.pairlist(x[[2]])) {
+      grepForSim <- grepl("^sim|^sim@.envir", deparse(x[[2]], backtick = TRUE))
+      if (as.character(x)[1] %in% c("$", "[[") &&
+          grepForSim &&
+          is.name(x[[3]])) {
+        out <- as.character(x[[3]])
+      } else if (as.character(x)[1] %in% "[[" &&
+                 grepForSim &&
+                   is.character(x[[3]])) {
+        out <- x[[3]]
+      } else if (as.character(x)[1] %in% "[[" &&
+                 grepForSim &&
+                 is.call(x[[3]])) {
+        out <- deparse(x[[3]])
+      }
+    } else {
+      out <- character()
+    }
+  }
+
+  if (!exists("out")) {
     if (type == "assign") {
       if (is.name(x)) {
         out <- character()
@@ -567,4 +613,45 @@ allCleanMessage <- "module code appears clean"
     }
   }
   return(out)
+}
+
+.isLastLineSim <- function(x, xAsString) {
+  if (grepl(x, pattern = mustBeReturnSim)) {
+    # only pull out last line
+    # must end with sim or return(sim) or return(invisible(sim))
+    xAsString <- xAsString[length(xAsString)-1]
+    xAsCall <- as.call(parse(text = xAsString))
+  } else {
+    xAsCall <- ""
+  }
+
+}
+
+.lineNumbersInSrcFile <- function(sim, module, namedTxt,
+                                  pd) {
+  if (!missing(sim)) {
+    pd <- sim@.envir[[module]][["._parsedData"]]
+  }
+  lineNumbers <- lapply(seq(namedTxt), function(patternIndex) {
+
+    wh <- which(grepl(pattern = paste0("\\b", namedTxt[patternIndex], "\\b"), pd$text) & (pd$line1 == pd$line2) & (pd$token == "expr"))
+    if (length(wh) == 0) {
+      wh <- which(agrepl(pattern = paste0(namedTxt[patternIndex]), pd$text) & (pd$line1 == pd$line2) & (pd$token == "expr"))
+    }
+
+    outerWh <- which(grepl(paste0("\\b", names(namedTxt)[patternIndex], "\\b"), pd$text) & (pd$token == "expr"))
+    linesWithFail <- unique(pd[wh, "line1"])
+    #unique(pd[outerWh, "line1"])
+
+    # Make sure they are inside the correct function
+    linesWithFail <- lapply(linesWithFail, function(lwf) {
+      whInner <- any((pd[outerWh,"line1"] < lwf) & (pd[outerWh,"line2"] > lwf) )
+      if (isTRUE(whInner)) lwf else numeric()
+    })
+    names(linesWithFail) <- namedTxt[patternIndex]
+    unlist(linesWithFail)
+
+  })
+  unlist(lineNumbers)
+
 }
